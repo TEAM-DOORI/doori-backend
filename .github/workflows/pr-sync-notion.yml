@@ -1,127 +1,27 @@
-name: Update Notion on PR events
+name: PR to Notion Sync
 
 on:
   pull_request:
-    types: [opened, ready_for_review, closed]
-
-permissions:
-  contents: read
+    types: [opened, reopened, ready_for_review, closed]
 
 jobs:
-  update-notion:
-    name: Sync PR status to Notion
+  sync-pr-to-notion:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
-      - name: Update Notion page
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sync PR status to Notion
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-          PR_ACTION: ${{ github.event.action }}
-          PR_MERGED: ${{ github.event.pull_request.merged }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-        run: |
-          set -euo pipefail
-
-          echo "action: ${PR_ACTION}, merged: ${PR_MERGED}"
-
-          if [ "${PR_ACTION}" = "closed" ] && [ "${PR_MERGED}" != "true" ]; then
-            echo "머지 없이 닫힌 PR입니다. skip합니다."
-            exit 0
-          fi
-
-          if [ "${PR_ACTION}" = "closed" ] && [ "${PR_MERGED}" = "true" ]; then
-            NEW_STATUS="완료"
-          else
-            NEW_STATUS="리뷰 중"
-          fi
-
-          echo "적용할 노션 상태: ${NEW_STATUS}"
-
-          ISSUE_NUMBERS=$(python3 <<'PY'
-          import os, re
-
-          body = os.environ.get("PR_BODY") or ""
-
-          pattern = re.compile(
-              r'(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)',
-              re.IGNORECASE
-          )
-
-          print("\n".join(pattern.findall(body)))
-          PY
-          )
-
-          if [ -z "$ISSUE_NUMBERS" ]; then
-            echo "PR 본문에서 이슈 번호를 찾을 수 없습니다. skip합니다."
-            exit 0
-          fi
-
-          echo "파싱된 이슈 번호 목록:"
-          echo "$ISSUE_NUMBERS"
-
-          while IFS= read -r ISSUE_NUMBER; do
-            [ -z "$ISSUE_NUMBER" ] && continue
-
-            echo "처리 중: 이슈 #${ISSUE_NUMBER}"
-
-            QUERY_JSON=$(jq -n \
-              --argjson number "$ISSUE_NUMBER" \
-              '{
-                filter: {
-                  property: "Github 이슈 번호",
-                  number: { equals: $number }
-                }
-              }')
-
-            QUERY_RESPONSE=$(curl -sS \
-              -X POST "https://api.notion.com/v1/databases/${NOTION_DATABASE_ID}/query" \
-              -H "Authorization: Bearer ${NOTION_TOKEN}" \
-              -H "Notion-Version: 2022-06-28" \
-              -H "Content-Type: application/json" \
-              -d "$QUERY_JSON")
-
-            PAGE_ID=$(echo "$QUERY_RESPONSE" | jq -r '.results[0].id // empty')
-
-            if [ -z "$PAGE_ID" ]; then
-              echo "이슈 #${ISSUE_NUMBER}에 해당하는 노션 행 없음. skip합니다."
-              continue
-            fi
-
-            CURRENT_STATUS=$(echo "$QUERY_RESPONSE" | jq -r '.results[0].properties["상태"].status.name // empty')
-            echo "현재 노션 상태: ${CURRENT_STATUS}"
-
-            if [ "$NEW_STATUS" = "리뷰 중" ]; then
-              if [ "${CURRENT_STATUS}" = "리뷰 중" ] || [ "${CURRENT_STATUS}" = "완료" ]; then
-                echo "이미 '${CURRENT_STATUS}' 상태입니다. skip합니다."
-                continue
-              fi
-            fi
-
-            PATCH_JSON=$(jq -n \
-              --arg status "$NEW_STATUS" \
-              --arg pr_url "$PR_URL" \
-              '{
-                properties: {
-                  "상태": { status: { name: $status } },
-                  "Github PR": { url: $pr_url }
-                }
-              }')
-
-            HTTP_CODE=$(curl -sS -o /tmp/notion_patch.json -w "%{http_code}" \
-              -X PATCH "https://api.notion.com/v1/pages/${PAGE_ID}" \
-              -H "Authorization: Bearer ${NOTION_TOKEN}" \
-              -H "Notion-Version: 2022-06-28" \
-              -H "Content-Type: application/json" \
-              -d "$PATCH_JSON")
-
-            if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
-              echo "Notion API failed with HTTP $HTTP_CODE"
-              cat /tmp/notion_patch.json
-              exit 1
-            fi
-
-            echo "완료: 이슈 #${ISSUE_NUMBER} → 상태=${NEW_STATUS}, PR URL 갱신"
-
-          done <<< "$ISSUE_NUMBERS"
+          NOTION_VERSION: 2022-06-28
+          NOTION_PEOPLE_MAP: ${{ secrets.NOTION_PEOPLE_MAP }}
+        run: node .github/scripts/notion-sync.mjs

@@ -1,5 +1,5 @@
 name: Task
-description: 팀 작업용 표준 이슈 템플릿
+description: 백엔드 작업용 표준 이슈 템플릿
 title: "[Task] "
 labels:
   - task
@@ -7,17 +7,17 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## 일감 관리 가이드
-        - 일감 등록은 누구나 가능
-        - 일감 진행 시 담당자/마감일을 Notion에서 반드시 지정
-        - 우선순위: 높음(ASAP), 중간, 낮음
+        ## 작성 가이드
+        - PR 본문에는 반드시 `Closes #이슈번호` 또는 `Fixes #이슈번호`를 포함하세요.
+        - 브랜치명은 `타입/이슈번호-작업-내용` 형식으로 작성하세요. (예: `feat/12-login-api`)
+        - 마감일은 `YYYY-MM-DD` 형식으로 입력하세요.
 
   - type: textarea
     id: objective
     attributes:
       label: Objective (목표)
       description: 이 작업으로 달성하려는 결과를 작성하세요.
-      placeholder: 예) GitHub 이슈 → Notion → PR → Merge 흐름 자동화
+      placeholder: 예) 인증 API 응답 구조를 표준화하고 예외 응답 코드를 통일한다.
     validations:
       required: true
 
@@ -25,7 +25,8 @@ body:
     id: background
     attributes:
       label: Background (배경)
-      description: 이 작업이 필요한 이유/맥락을 작성하세요.
+      description: 이 작업이 필요한 이유/문제를 작성하세요.
+      placeholder: 예) 클라이언트에서 엔드포인트별 응답 포맷이 달라 후처리 비용이 커지고 있음.
     validations:
       required: true
 
@@ -35,9 +36,20 @@ body:
       label: Task Details (작업 상세)
       description: 실제 수행해야 할 작업 단계를 작성하세요.
       placeholder: |
-        [1] 이슈 생성
-        [2] Notion DB 반영
-        [3] 브랜치 생성 ...
+        [1] Controller 응답 DTO 정리
+        [2] Service 예외 코드 매핑
+        [3] 테스트 코드 업데이트
+    validations:
+      required: true
+
+  - type: textarea
+    id: test-plan
+    attributes:
+      label: Test Plan (검증 방법)
+      description: 어떻게 확인할지 명령어/시나리오를 작성하세요.
+      placeholder: |
+        - ./gradlew clean test --no-daemon
+        - 인증 실패/성공 케이스 수동 호출 확인
     validations:
       required: true
 
@@ -52,10 +64,23 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: due-date
+    attributes:
+      label: 마감일 (YYYY-MM-DD)
+      description: 예) 2026-05-01
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+
   - type: textarea
     id: done-criteria
     attributes:
       label: Done Criteria (완료 조건)
       description: 작업 완료 판단 기준을 작성하세요.
+      placeholder: |
+        - API 응답 포맷 통일
+        - 관련 테스트 통과
+        - PR 리뷰 승인 완료
     validations:
       required: true

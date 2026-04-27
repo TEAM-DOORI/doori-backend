@@ -2,7 +2,7 @@ name: Issue to Notion Sync
 
 on:
   issues:
-    types: [opened]
+    types: [opened, edited, reopened, closed, assigned, unassigned]
 
 jobs:
   sync-issue-to-notion:
@@ -23,4 +23,5 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           NOTION_VERSION: 2022-06-28
+          NOTION_PEOPLE_MAP: ${{ secrets.NOTION_PEOPLE_MAP }}
         run: node .github/scripts/notion-sync.mjs
