@@ -16,7 +16,7 @@
 
 ```text
 [✨ Feat] 로그인 API 구현
-[🐛 Fix] 홈 피드 조회 시 500 에러 수정
+[🔨 Fix] 홈 피드 조회 시 500 에러 수정
 [🧹 Chore] 공통 예외 응답 포맷 정리
 [📝 Docs] 배포 가이드 문서화
 [♻️ Refactor] 인증 필터 구조 분리
@@ -27,7 +27,7 @@
 | 타입 | 이모티콘 | 용도 |
 | --- | --- | --- |
 | `Feat` | ✨ | 새 기능 |
-| `Fix` | 🐛 | 버그 수정 |
+| `Fix` | 🔨 | 버그 수정 |
 | `Chore` | 🧹 | 설정/빌드/의존성/운영 작업 |
 | `Docs` | 📝 | 문서 작업 |
 | `Refactor` | ♻️ | 동작 변경 없는 구조 개선 |
@@ -66,7 +66,7 @@ chore/5-exception-format
 
 ```text
 [✨ Feat] 로그인 API 구현 (#12)
-[🐛 Fix] 홈 피드 조회 시 500 에러 수정 (#34)
+[🔨 Fix] 홈 피드 조회 시 500 에러 수정 (#34)
 ```
 
 규칙:
@@ -124,7 +124,7 @@ git checkout -b feat/12-login-api
 
 ```text
 feat: ✨ 로그인 API 구현
-fix: 🐛 피드 조회 500 에러 수정
+fix: 🔨 피드 조회 500 에러 수정
 chore: 🧹 예외 응답 코드 정리
 docs: 📝 README 업데이트
 refactor: ♻️ 인증 로직 분리
@@ -169,6 +169,19 @@ refactor: ♻️ 인증 로직 분리
 
 - `진행중` 전환은 실무 기준으로 수동 업데이트
 - 작업 시작 전에만 담당자/마감일/상태를 정확히 맞춰도 추적 품질이 크게 올라감
+
+### 4-1. Notion DB 필드 기준
+
+| 필드명 | 타입 | 비고 |
+| --- | --- | --- |
+| `이슈 번호` | Number | GitHub issue number 키 |
+| `제목` | Title | 이슈/PR 제목 동기화 |
+| `상태` | Status/Select | `시작전/진행중/리뷰중/완료/취소됨` |
+| `이슈 URL` | URL | GitHub issue 링크 |
+| `PR URL` | URL | GitHub PR 링크 |
+| `담당자` | People | `NOTION_PEOPLE_MAP` 기반 동기화 |
+| `담당자(텍스트)` | Rich text | People 매핑 실패 시 fallback |
+| `마감일` | Date | 이슈 본문 `마감일 (YYYY-MM-DD)` 파싱 |
 
 ---
 
