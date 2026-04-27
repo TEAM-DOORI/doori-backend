@@ -1,0 +1,61 @@
+name: Task
+description: 팀 작업용 표준 이슈 템플릿
+title: "[Task] "
+labels:
+  - task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 일감 관리 가이드
+        - 일감 등록은 누구나 가능
+        - 일감 진행 시 담당자/마감일을 Notion에서 반드시 지정
+        - 우선순위: 높음(ASAP), 중간, 낮음
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective (목표)
+      description: 이 작업으로 달성하려는 결과를 작성하세요.
+      placeholder: 예) GitHub 이슈 → Notion → PR → Merge 흐름 자동화
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Background (배경)
+      description: 이 작업이 필요한 이유/맥락을 작성하세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: task-details
+    attributes:
+      label: Task Details (작업 상세)
+      description: 실제 수행해야 할 작업 단계를 작성하세요.
+      placeholder: |
+        [1] 이슈 생성
+        [2] Notion DB 반영
+        [3] 브랜치 생성 ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 우선순위
+      options:
+        - 높음 (ASAP)
+        - 중간
+        - 낮음
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-criteria
+    attributes:
+      label: Done Criteria (완료 조건)
+      description: 작업 완료 판단 기준을 작성하세요.
+    validations:
+      required: true
