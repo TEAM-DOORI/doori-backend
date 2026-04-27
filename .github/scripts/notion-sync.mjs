@@ -36,6 +36,13 @@ const STATUS = {
 const PEOPLE_MAP = parsePeopleMap(process.env.NOTION_PEOPLE_MAP);
 const ISSUE_SYNC_ACTIONS = ['opened', 'edited', 'reopened', 'closed', 'assigned', 'unassigned'];
 const PR_SYNC_ACTIONS = ['opened', 'reopened', 'ready_for_review', 'closed'];
+const ISSUE_NUMBER_PROPERTY_CANDIDATES = [
+  PROPS.issueNumber,
+  'Github 이슈 번호',
+  'GitHub 이슈 번호',
+  '이슈 번호',
+  'Issue Number',
+].filter(Boolean);
 const MAX_TEXT = 1800;
 
 function normalizeNotionId(rawValue, envName) {
@@ -216,15 +223,34 @@ async function notionRequest(path, method, body) {
 }
 
 async function findPageByIssueNumber(issueNumber) {
-  const result = await notionRequest(`/databases/${NOTION_DATABASE_ID}/query`, 'POST', {
-    filter: {
-      property: PROPS.issueNumber,
-      number: { equals: issueNumber },
-    },
-    page_size: 1,
-  });
+  let lastError = null;
 
-  return result.results?.[0] || null;
+  for (const propertyName of [...new Set(ISSUE_NUMBER_PROPERTY_CANDIDATES)]) {
+    try {
+      const result = await notionRequest(`/databases/${NOTION_DATABASE_ID}/query`, 'POST', {
+        filter: {
+          property: propertyName,
+          number: { equals: issueNumber },
+        },
+        page_size: 1,
+      });
+
+      if (PROPS.issueNumber !== propertyName) {
+        console.log(`Using Notion issue number property: ${propertyName}`);
+        PROPS.issueNumber = propertyName;
+      }
+
+      return result.results?.[0] || null;
+    } catch (error) {
+      if (String(error?.message || '').includes('Could not find property with name or id')) {
+        lastError = error;
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError || new Error(`Cannot find issue number property in Notion DB. Tried: ${ISSUE_NUMBER_PROPERTY_CANDIDATES.join(', ')}`);
 }
 
 async function createPage(properties) {
