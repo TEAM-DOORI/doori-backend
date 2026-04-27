@@ -10,7 +10,7 @@ for (const envName of REQUIRED_ENVS) {
 }
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN;
-const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
+const NOTION_DATABASE_ID = normalizeNotionId(process.env.NOTION_DATABASE_ID, 'NOTION_DATABASE_ID');
 const NOTION_VERSION = process.env.NOTION_VERSION || '2022-06-28';
 
 const PROPS = {
@@ -37,6 +37,21 @@ const PEOPLE_MAP = parsePeopleMap(process.env.NOTION_PEOPLE_MAP);
 const ISSUE_SYNC_ACTIONS = ['opened', 'edited', 'reopened', 'closed', 'assigned', 'unassigned'];
 const PR_SYNC_ACTIONS = ['opened', 'reopened', 'ready_for_review', 'closed'];
 const MAX_TEXT = 1800;
+
+function normalizeNotionId(rawValue, envName) {
+  const value = String(rawValue || '').trim();
+  if (!value) {
+    throw new Error(`${envName} is empty`);
+  }
+
+  // Accept either raw UUID (with/without dashes) or copied Notion URL containing the ID.
+  const matched = value.match(/[0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+  if (!matched) {
+    throw new Error(`${envName} must contain a valid Notion ID (received: "${value}")`);
+  }
+
+  return matched[0].replace(/-/g, '');
+}
 
 function parsePeopleMap(rawValue) {
   if (!rawValue) {
