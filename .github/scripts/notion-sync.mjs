@@ -37,6 +37,33 @@ const PEOPLE_MAP = parsePeopleMap(process.env.NOTION_PEOPLE_MAP);
 const ISSUE_SYNC_ACTIONS = ['opened', 'edited', 'reopened', 'closed', 'assigned', 'unassigned'];
 const PR_SYNC_ACTIONS = ['opened', 'reopened', 'ready_for_review', 'closed'];
 const MAX_TEXT = 1800;
+const RESOLVED_PROP_TYPES = {};
+
+const PROP_ALIASES = {
+  issueNumber: ['Github 이슈 번호', 'GitHub 이슈 번호', '이슈 번호', 'Issue Number'],
+  title: ['제목', 'Name', '이름', 'Title'],
+  status: ['상태', 'Status'],
+  issueUrl: ['이슈 URL', 'Github 이슈', 'GitHub 이슈', 'Github Issue', 'GitHub Issue', 'Issue URL'],
+  prUrl: ['PR URL', 'Github PR', 'GitHub PR', 'Pull Request URL'],
+  summary: ['요약', 'Summary', '설명', 'Description'],
+  assignee: ['담당자', 'Assignee', 'Owner'],
+  assigneeText: ['담당자(텍스트)', '담당자 텍스트', 'Assignee Text'],
+  dueDate: ['마감일', 'Due Date', 'Deadline'],
+};
+
+const PROP_TYPES = {
+  issueNumber: ['number'],
+  title: ['title'],
+  status: ['status', 'select'],
+  issueUrl: ['url'],
+  prUrl: ['url'],
+  summary: ['rich_text'],
+  assignee: ['people'],
+  assigneeText: ['rich_text'],
+  dueDate: ['date'],
+};
+
+const OPTIONAL_PROP_KEYS = new Set(['status', 'issueUrl', 'prUrl', 'summary', 'assignee', 'assigneeText', 'dueDate']);
 
 function normalizeNotionId(rawValue, envName) {
   const value = String(rawValue || '').trim();
@@ -83,6 +110,10 @@ function parsePeopleMap(rawValue) {
     console.warn(`Invalid NOTION_PEOPLE_MAP: ${error.message}`);
     return {};
   }
+}
+
+function normalizePropertyName(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, '');
 }
 
 function truncate(value, maxLength = MAX_TEXT) {
@@ -179,13 +210,26 @@ function buildAssigneeProperties(assignees) {
     console.log(`Unmapped GitHub assignees: ${unmappedLogins.join(', ')}`);
   }
 
+  const properties = {};
   const uniqueMappedIds = [...new Set(mappedIds)];
-  return {
-    [PROPS.assignee]: {
-      people: uniqueMappedIds.map((id) => ({ id })),
-    },
-    [PROPS.assigneeText]: toRichText(unmappedLogins.join(', ')),
-  };
+
+  if (PROPS.assignee) {
+    properties[PROPS.assignee] = { people: uniqueMappedIds.map((id) => ({ id })) };
+  }
+
+  if (PROPS.assigneeText) {
+    properties[PROPS.assigneeText] = toRichText(unmappedLogins.join(', '));
+  }
+
+  return properties;
+}
+
+function buildStatusValue(statusName) {
+  const propType = RESOLVED_PROP_TYPES.status;
+  if (propType === 'select') {
+    return { select: { name: statusName } };
+  }
+  return { status: { name: statusName } };
 }
 
 async function notionRequest(path, method, body) {
@@ -213,6 +257,44 @@ async function notionRequest(path, method, body) {
   }
 
   return data;
+}
+
+async function resolveNotionPropertyMapping() {
+  const database = await notionRequest(`/databases/${NOTION_DATABASE_ID}`, 'GET');
+  const properties = database?.properties || {};
+  const dbProperties = Object.entries(properties).map(([name, def]) => ({
+    name,
+    type: def?.type,
+  }));
+
+  for (const [propKey, expectedTypes] of Object.entries(PROP_TYPES)) {
+    const candidates = [PROPS[propKey], ...(PROP_ALIASES[propKey] || [])]
+      .filter((value) => Boolean(value))
+      .map((value) => String(value).trim());
+
+    let found = null;
+    for (const candidate of [...new Set(candidates)]) {
+      found = dbProperties.find((property) =>
+        normalizePropertyName(property.name) === normalizePropertyName(candidate) &&
+        expectedTypes.includes(property.type));
+      if (found) {
+        break;
+      }
+    }
+
+    if (!found) {
+      if (OPTIONAL_PROP_KEYS.has(propKey)) {
+        PROPS[propKey] = null;
+        continue;
+      }
+      throw new Error(`Cannot resolve required Notion property for "${propKey}". Tried: ${candidates.join(', ')}`);
+    }
+
+    PROPS[propKey] = found.name;
+    RESOLVED_PROP_TYPES[propKey] = found.type;
+  }
+
+  console.log(`Resolved Notion properties: ${JSON.stringify(PROPS)}`);
 }
 
 async function findPageByIssueNumber(issueNumber) {
@@ -367,25 +449,40 @@ async function handleIssueEvent(payload) {
   const properties = {
     [PROPS.issueNumber]: { number: issue.number },
     [PROPS.title]: toTitle(issue.title),
-    [PROPS.issueUrl]: { url: issue.html_url },
-    [PROPS.summary]: toRichText(buildIssueSummary(issue)),
-    [PROPS.dueDate]: toDate(dueDate),
     ...assigneeProperties,
   };
 
-  if (status) {
-    properties[PROPS.status] = { select: { name: status } };
+  if (PROPS.issueUrl) {
+    properties[PROPS.issueUrl] = { url: issue.html_url };
+  }
+  if (PROPS.summary) {
+    properties[PROPS.summary] = toRichText(buildIssueSummary(issue));
+  }
+  if (PROPS.dueDate) {
+    properties[PROPS.dueDate] = toDate(dueDate);
+  }
+  if (status && PROPS.status) {
+    properties[PROPS.status] = buildStatusValue(status);
   }
 
   const createDefaults = {
     [PROPS.issueNumber]: { number: issue.number },
     [PROPS.title]: toTitle(issue.title),
-    [PROPS.status]: { select: { name: status || STATUS.todo } },
-    [PROPS.issueUrl]: { url: issue.html_url },
-    [PROPS.summary]: toRichText(buildIssueSummary(issue)),
-    [PROPS.dueDate]: toDate(dueDate),
     ...assigneeProperties,
   };
+
+  if (PROPS.status) {
+    createDefaults[PROPS.status] = buildStatusValue(status || STATUS.todo);
+  }
+  if (PROPS.issueUrl) {
+    createDefaults[PROPS.issueUrl] = { url: issue.html_url };
+  }
+  if (PROPS.summary) {
+    createDefaults[PROPS.summary] = toRichText(buildIssueSummary(issue));
+  }
+  if (PROPS.dueDate) {
+    createDefaults[PROPS.dueDate] = toDate(dueDate);
+  }
 
   await upsertByIssueNumber(issue.number, properties, createDefaults);
 }
@@ -413,29 +510,38 @@ async function handlePullRequestEvent(payload) {
   const properties = {
     [PROPS.issueNumber]: { number: issueNumber },
     [PROPS.title]: toTitle(pr.title),
-    [PROPS.prUrl]: { url: pr.html_url },
-    [PROPS.summary]: toRichText(buildPrSummary(pr)),
     ...assigneeProperties,
   };
 
-  if (status) {
-    properties[PROPS.status] = { select: { name: status } };
+  if (PROPS.prUrl) {
+    properties[PROPS.prUrl] = { url: pr.html_url };
   }
-
-  if (issueUrl) {
+  if (PROPS.summary) {
+    properties[PROPS.summary] = toRichText(buildPrSummary(pr));
+  }
+  if (status && PROPS.status) {
+    properties[PROPS.status] = buildStatusValue(status);
+  }
+  if (issueUrl && PROPS.issueUrl) {
     properties[PROPS.issueUrl] = { url: issueUrl };
   }
 
   const createDefaults = {
     [PROPS.issueNumber]: { number: issueNumber },
     [PROPS.title]: toTitle(pr.title),
-    [PROPS.status]: { select: { name: status || STATUS.inProgress } },
-    [PROPS.prUrl]: { url: pr.html_url },
-    [PROPS.summary]: toRichText(buildPrSummary(pr)),
     ...assigneeProperties,
   };
 
-  if (issueUrl) {
+  if (PROPS.status) {
+    createDefaults[PROPS.status] = buildStatusValue(status || STATUS.inProgress);
+  }
+  if (PROPS.prUrl) {
+    createDefaults[PROPS.prUrl] = { url: pr.html_url };
+  }
+  if (PROPS.summary) {
+    createDefaults[PROPS.summary] = toRichText(buildPrSummary(pr));
+  }
+  if (issueUrl && PROPS.issueUrl) {
     createDefaults[PROPS.issueUrl] = { url: issueUrl };
   }
 
@@ -445,6 +551,8 @@ async function handlePullRequestEvent(payload) {
 async function main() {
   const payload = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
   const eventName = process.env.GITHUB_EVENT_NAME;
+
+  await resolveNotionPropertyMapping();
 
   if (eventName === 'issues' && ISSUE_SYNC_ACTIONS.includes(payload.action)) {
     await handleIssueEvent(payload);
