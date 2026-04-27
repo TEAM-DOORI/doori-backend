@@ -41,12 +41,12 @@ const RESOLVED_PROP_TYPES = {};
 
 const PROP_ALIASES = {
   issueNumber: ['Github 이슈 번호', 'GitHub 이슈 번호', '이슈 번호', 'Issue Number'],
-  title: ['제목', 'Name', '이름', 'Title'],
+  title: ['작업 이름', '제목', 'Name', '이름', 'Title'],
   status: ['상태', 'Status'],
-  issueUrl: ['이슈 URL', 'Github 이슈', 'GitHub 이슈', 'Github Issue', 'GitHub Issue', 'Issue URL'],
+  issueUrl: ['Github 이슈 URL', 'GitHub 이슈 URL', '이슈 URL', 'Github 이슈', 'GitHub 이슈', 'Github Issue', 'GitHub Issue', 'Issue URL'],
   prUrl: ['PR URL', 'Github PR', 'GitHub PR', 'Pull Request URL'],
   summary: ['요약', 'Summary', '설명', 'Description'],
-  assignee: ['담당자', 'Assignee', 'Owner'],
+  assignee: ['사람', '담당자', 'Assignee', 'Owner'],
   assigneeText: ['담당자(텍스트)', '담당자 텍스트', 'Assignee Text'],
   dueDate: ['마감일', 'Due Date', 'Deadline'],
 };
