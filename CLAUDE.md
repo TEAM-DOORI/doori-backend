@@ -9,7 +9,8 @@ Claude는 아래 순서대로 규칙을 따른다.
 1. `.claude/rules/commit.md`
 2. `.claude/rules/pr.md`
 3. `.claude/rules/code-review.md`
-4. `README.md` (협업 정책 단일 소스)
+4. `.claude/rules/response-exception.md`
+5. `README.md` (협업 정책 단일 소스)
 
 실행 프롬프트는 아래를 사용한다.
 
