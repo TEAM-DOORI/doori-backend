@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -45,17 +46,22 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(ErrorCode.COMMON_BAD_REQUEST.getHttpStatus()).body(response);
 	}
 
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+		HttpMessageNotReadableException ex,
+		HttpServletRequest request
+	) {
+		ErrorResponse response = ErrorResponse.of(ErrorCode.COMMON_BAD_REQUEST, request);
+		return ResponseEntity.status(ErrorCode.COMMON_BAD_REQUEST.getHttpStatus()).body(response);
+	}
+
 	@ExceptionHandler({
 		BindException.class,
 		MethodArgumentTypeMismatchException.class,
 		MissingServletRequestParameterException.class
 	})
 	public ResponseEntity<ErrorResponse> handleBindingException(Exception ex, HttpServletRequest request) {
-		ErrorResponse response = ErrorResponse.of(
-			ErrorCode.COMMON_BAD_REQUEST,
-			ex.getMessage(),
-			request
-		);
+		ErrorResponse response = ErrorResponse.of(ErrorCode.COMMON_BAD_REQUEST, request);
 		return ResponseEntity.status(ErrorCode.COMMON_BAD_REQUEST.getHttpStatus()).body(response);
 	}
 
@@ -64,11 +70,7 @@ public class GlobalExceptionHandler {
 		NoResourceFoundException ex,
 		HttpServletRequest request
 	) {
-		ErrorResponse response = ErrorResponse.of(
-			ErrorCode.COMMON_NOT_FOUND,
-			ErrorCode.COMMON_NOT_FOUND.getDefaultMessage(),
-			request
-		);
+		ErrorResponse response = ErrorResponse.of(ErrorCode.COMMON_NOT_FOUND, request);
 		return ResponseEntity.status(ErrorCode.COMMON_NOT_FOUND.getHttpStatus()).body(response);
 	}
 
