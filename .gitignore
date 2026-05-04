@@ -38,4 +38,4 @@ out/
 .vscode/
 
 ### Local properties (sensitive credentials) ###
-application-local.properties
+src/main/resources/application-local.properties
