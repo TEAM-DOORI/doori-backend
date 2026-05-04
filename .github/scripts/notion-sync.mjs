@@ -398,11 +398,11 @@ function determineStatusForPrEvent(action, pr) {
   }
 
   if (action === 'opened' || action === 'reopened') {
-    return pr.draft ? STATUS.inProgress : STATUS.inReview;
+    return STATUS.inReview;
   }
 
   if (action === 'closed') {
-    return pr.merged ? STATUS.done : STATUS.inProgress;
+    return pr.merged ? STATUS.done : null;
   }
 
   return null;
@@ -533,7 +533,7 @@ async function handlePullRequestEvent(payload) {
   };
 
   if (PROPS.status) {
-    createDefaults[PROPS.status] = buildStatusValue(status || STATUS.inProgress);
+    createDefaults[PROPS.status] = buildStatusValue(status || STATUS.inReview);
   }
   if (PROPS.prUrl) {
     createDefaults[PROPS.prUrl] = { url: pr.html_url };
