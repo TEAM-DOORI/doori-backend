@@ -62,7 +62,7 @@ claude
 |---|---|---|
 | `/start 타입 이슈번호` | 프로젝트 루트 | 이슈 조회 → 규칙에 맞는 브랜치 자동 생성 → 구현 계획 분석 |
 | `/commit` | 프로젝트 루트 | 변경사항 확인 → 자동 검증 → 규칙에 맞는 커밋 메시지 제안 후 커밋 |
-| `/pr` | 프로젝트 루트 | 브랜치 커밋 기준으로 PR 제목/본문 초안 자동 생성 |
+| `/pr` | 프로젝트 루트 | 브랜치 푸시 → Draft PR 자동 생성 |
 | `/review` | 프로젝트 루트 | PR 올리기 전 사전 코드 리뷰 (심각도 분류 포함) |
 
 **주의사항**
@@ -147,7 +147,7 @@ git checkout -b feat/12-login-api
 | Build + Test | `./gradlew clean build --no-daemon` |
 | Test only | `./gradlew test` |
 
-> **Claude Code 팁**: `/pr` 커맨드로 브랜치 푸시 → PR 제목/본문 초안 자동 생성을 한 번에 처리
+> **Claude Code 팁**: `/pr` 커맨드로 브랜치 푸시 → Draft PR 자동 생성을 한 번에 처리
 
 ### 코드 리뷰
 
