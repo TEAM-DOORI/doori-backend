@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 public class JwtProvider {
 
     private static final String TOKEN_TYPE_CLAIM = "type";
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
     private static final String VERIFICATION_TOKEN_TYPE = "verification";
 
     private final SecretKey secretKey;
@@ -39,11 +41,11 @@ public class JwtProvider {
     }
 
     public String createAccessToken(Long memberId) {
-        return createToken(String.valueOf(memberId), accessTokenValidMs);
+        return createToken(String.valueOf(memberId), accessTokenValidMs, ACCESS_TOKEN_TYPE);
     }
 
     public String createRefreshToken(Long memberId) {
-        return createToken(String.valueOf(memberId), refreshTokenValidMs);
+        return createToken(String.valueOf(memberId), refreshTokenValidMs, REFRESH_TOKEN_TYPE);
     }
 
     public String createVerificationToken(String email) {
@@ -62,7 +64,23 @@ public class JwtProvider {
             return Long.parseLong(getClaims(token).getSubject());
         } catch (ExpiredJwtException e) {
             throw new CustomException(ErrorCode.AUTH_EXPIRED_TOKEN);
-        } catch (JwtException e) {
+        } catch (JwtException | NumberFormatException e) {
+            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+        }
+    }
+
+    public Long validateAccessTokenAndGetMemberId(String token) {
+        try {
+            Claims claims = getClaims(token);
+            if (!ACCESS_TOKEN_TYPE.equals(claims.get(TOKEN_TYPE_CLAIM, String.class))) {
+                throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+            }
+            return Long.parseLong(claims.getSubject());
+        } catch (CustomException e) {
+            throw e;
+        } catch (ExpiredJwtException e) {
+            throw new CustomException(ErrorCode.AUTH_EXPIRED_TOKEN);
+        } catch (JwtException | NumberFormatException e) {
             throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
         }
     }
@@ -84,7 +102,11 @@ public class JwtProvider {
     }
 
     public Long getMemberId(String token) {
-        return Long.parseLong(getClaims(token).getSubject());
+        try {
+            return Long.parseLong(getClaims(token).getSubject());
+        } catch (NumberFormatException e) {
+            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+        }
     }
 
     public LocalDateTime getRefreshTokenExpiry(String token) {
@@ -102,10 +124,11 @@ public class JwtProvider {
         }
     }
 
-    private String createToken(String subject, long validMs) {
+    private String createToken(String subject, long validMs, String type) {
         Date now = new Date();
         return Jwts.builder()
             .subject(subject)
+            .claim(TOKEN_TYPE_CLAIM, type)
             .issuedAt(now)
             .expiration(new Date(now.getTime() + validMs))
             .signWith(secretKey)

@@ -1,6 +1,9 @@
 package com.doori.doori_backend.auth.jwt;
 
+import com.doori.doori_backend.global.error.ErrorCode;
+import com.doori.doori_backend.global.error.ErrorResponse;
 import com.doori.doori_backend.global.exception.CustomException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -28,8 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
         if (token != null) {
             try {
-                jwtProvider.validate(token);
-                Long memberId = jwtProvider.getMemberId(token);
+                Long memberId = jwtProvider.validateAccessTokenAndGetMemberId(token);
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                         memberId,
@@ -39,9 +42,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (CustomException e) {
                 SecurityContextHolder.clearContext();
+                sendErrorResponse(response, request, e.getErrorCode());
+                return;
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, HttpServletRequest request,
+        ErrorCode errorCode) throws IOException {
+        response.setStatus(errorCode.getHttpStatus().value());
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(ErrorResponse.of(errorCode, request)));
     }
 
     private String resolveToken(HttpServletRequest request) {

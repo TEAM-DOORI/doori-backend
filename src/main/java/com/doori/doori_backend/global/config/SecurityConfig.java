@@ -2,6 +2,12 @@ package com.doori.doori_backend.global.config;
 
 import com.doori.doori_backend.auth.jwt.JwtAuthenticationFilter;
 import com.doori.doori_backend.auth.jwt.JwtProvider;
+import com.doori.doori_backend.global.error.ErrorCode;
+import com.doori.doori_backend.global.error.ErrorResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +27,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -33,8 +40,22 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, e) ->
+                    sendErrorResponse(response, request, ErrorCode.AUTH_UNAUTHORIZED))
+                .accessDeniedHandler((request, response, e) ->
+                    sendErrorResponse(response, request, ErrorCode.AUTH_FORBIDDEN))
+            )
+            .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, objectMapper),
+                UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, HttpServletRequest request,
+        ErrorCode errorCode) throws IOException {
+        response.setStatus(errorCode.getHttpStatus().value());
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(ErrorResponse.of(errorCode, request)));
     }
 
     @Bean
