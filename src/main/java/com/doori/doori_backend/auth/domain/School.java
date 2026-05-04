@@ -9,8 +9,6 @@ public enum School {
     KONKUK_UNIV("konkuk.ac.kr", "건국대학교"),
     HANYANG_UNIV("hanyang.ac.kr","한양대학교");
 
-
-
     private final String domain;
     private final String displayName;
 
