@@ -1,7 +1,9 @@
 # ---------------------------------------------------------------
-# 이 파일을 복사해서 application-local.properties 로 저장 후 값을 채우세요.
-# application-local.properties 는 .gitignore 에 등록되어 있으므로 커밋되지 않습니다.
-# 사전 준비: MySQL에서 `CREATE DATABASE doori;` 실행 필요
+# 로컬 실행 전 준비 순서:
+# 1) 이 파일을 복사해서 application-local.properties 로 저장하고 아래 값을 채우세요.
+# 2) application-local.properties 는 .gitignore 에 등록되어 있으므로 커밋되지 않습니다.
+# 3) MySQL에서 `CREATE DATABASE doori;` 를 먼저 실행하세요.
+# 4) 위 설정을 마친 뒤에만 `./gradlew bootRun` 으로 애플리케이션을 실행하세요.
 # ---------------------------------------------------------------
 
 springdoc.api-docs.enabled=true
