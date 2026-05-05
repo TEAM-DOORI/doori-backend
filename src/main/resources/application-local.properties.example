@@ -1,18 +1,19 @@
 # ---------------------------------------------------------------
 # 이 파일을 복사해서 application-local.properties 로 저장 후 값을 채우세요.
 # application-local.properties 는 .gitignore 에 등록되어 있으므로 커밋되지 않습니다.
+# 사전 준비: MySQL에서 `CREATE DATABASE doori;` 실행 필요
 # ---------------------------------------------------------------
 
 springdoc.api-docs.enabled=true
 springdoc.swagger-ui.enabled=true
 
-spring.datasource.url=jdbc:h2:mem:doori;MODE=MySQL;DB_CLOSE_DELAY=-1
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-spring.h2.console.enabled=true
-spring.jpa.hibernate.ddl-auto=create-drop
+spring.datasource.url=jdbc:mysql://localhost:3306/doori?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.username=<MySQL 사용자명>
+spring.datasource.password=<MySQL 비밀번호>
+spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
