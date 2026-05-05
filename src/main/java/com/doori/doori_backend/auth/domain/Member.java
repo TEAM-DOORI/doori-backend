@@ -1,6 +1,5 @@
 package com.doori.doori_backend.auth.domain;
 
-import com.doori.doori_backend.auth.domain.School;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;

@@ -79,7 +79,7 @@ public class AuthService {
     @Transactional
     public TokenResponse refresh(TokenRefreshRequest request) {
         String token = request.refreshToken();
-        Long memberId = jwtProvider.validateAndGetMemberId(token);
+        Long memberId = jwtProvider.validateRefreshTokenAndGetMemberId(token);
         refreshTokenRepository.findById(token)
             .orElseThrow(() -> new CustomException(ErrorCode.AUTH_INVALID_TOKEN));
         IssuedTokens tokens = issueTokens(memberId);

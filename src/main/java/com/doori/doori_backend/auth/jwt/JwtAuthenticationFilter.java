@@ -1,9 +1,7 @@
 package com.doori.doori_backend.auth.jwt;
 
-import com.doori.doori_backend.global.error.ErrorCode;
-import com.doori.doori_backend.global.error.ErrorResponse;
 import com.doori.doori_backend.global.exception.CustomException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.doori.doori_backend.global.security.SecurityErrorResponder;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final ObjectMapper objectMapper;
+    private final SecurityErrorResponder errorResponder;
 
     @Override
     protected void doFilterInternal(
@@ -42,18 +40,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (CustomException e) {
                 SecurityContextHolder.clearContext();
-                sendErrorResponse(response, request, e.getErrorCode());
+                errorResponder.sendErrorResponse(response, request, e.getErrorCode());
                 return;
             }
         }
         filterChain.doFilter(request, response);
-    }
-
-    private void sendErrorResponse(HttpServletResponse response, HttpServletRequest request,
-        ErrorCode errorCode) throws IOException {
-        response.setStatus(errorCode.getHttpStatus().value());
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(ErrorResponse.of(errorCode, request)));
     }
 
     private String resolveToken(HttpServletRequest request) {

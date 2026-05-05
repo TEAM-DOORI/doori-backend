@@ -59,30 +59,12 @@ public class JwtProvider {
             .compact();
     }
 
-    public Long validateAndGetMemberId(String token) {
-        try {
-            return Long.parseLong(getClaims(token).getSubject());
-        } catch (ExpiredJwtException e) {
-            throw new CustomException(ErrorCode.AUTH_EXPIRED_TOKEN);
-        } catch (JwtException | NumberFormatException e) {
-            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
-        }
+    public Long validateAccessTokenAndGetMemberId(String token) {
+        return validateTypedTokenAndGetMemberId(token, ACCESS_TOKEN_TYPE);
     }
 
-    public Long validateAccessTokenAndGetMemberId(String token) {
-        try {
-            Claims claims = getClaims(token);
-            if (!ACCESS_TOKEN_TYPE.equals(claims.get(TOKEN_TYPE_CLAIM, String.class))) {
-                throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
-            }
-            return Long.parseLong(claims.getSubject());
-        } catch (CustomException e) {
-            throw e;
-        } catch (ExpiredJwtException e) {
-            throw new CustomException(ErrorCode.AUTH_EXPIRED_TOKEN);
-        } catch (JwtException | NumberFormatException e) {
-            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
-        }
+    public Long validateRefreshTokenAndGetMemberId(String token) {
+        return validateTypedTokenAndGetMemberId(token, REFRESH_TOKEN_TYPE);
     }
 
     public String getEmailFromVerificationToken(String token) {
@@ -101,25 +83,23 @@ public class JwtProvider {
         }
     }
 
-    public Long getMemberId(String token) {
-        try {
-            return Long.parseLong(getClaims(token).getSubject());
-        } catch (NumberFormatException e) {
-            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
-        }
-    }
-
     public LocalDateTime getRefreshTokenExpiry(String token) {
         Date expiry = getClaims(token).getExpiration();
         return expiry.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
-    public void validate(String token) {
+    private Long validateTypedTokenAndGetMemberId(String token, String expectedType) {
         try {
-            getClaims(token);
+            Claims claims = getClaims(token);
+            if (!expectedType.equals(claims.get(TOKEN_TYPE_CLAIM, String.class))) {
+                throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+            }
+            return Long.parseLong(claims.getSubject());
+        } catch (CustomException e) {
+            throw e;
         } catch (ExpiredJwtException e) {
             throw new CustomException(ErrorCode.AUTH_EXPIRED_TOKEN);
-        } catch (JwtException e) {
+        } catch (JwtException | NumberFormatException e) {
             throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
         }
     }
