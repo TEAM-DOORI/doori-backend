@@ -1,7 +1,7 @@
 package com.doori.doori_backend.auth.service;
 
-import com.doori.doori_backend.auth.domain.School;
 import com.doori.doori_backend.auth.domain.Member;
+import com.doori.doori_backend.school.domain.School;
 import com.doori.doori_backend.auth.domain.RefreshToken;
 import com.doori.doori_backend.auth.dto.request.EmailSendRequest;
 import com.doori.doori_backend.auth.dto.request.EmailVerifyRequest;
