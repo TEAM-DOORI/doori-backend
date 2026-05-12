@@ -24,7 +24,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-public class Member {
+public class gMember {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

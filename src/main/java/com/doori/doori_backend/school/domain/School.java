@@ -28,7 +28,7 @@ public enum School {
     public static School fromEmail(String email) {
         String domain = email.substring(email.indexOf('@') + 1);
         return Arrays.stream(values())
-            .filter(s -> s.domain.equals(domain))
+            .filter(s -> s.domain.equalsIgnoreCase(domain))
             .findFirst()
             .orElseThrow(() -> new CustomException(ErrorCode.SCHOOL_UNSUPPORTED_EMAIL));
     }
