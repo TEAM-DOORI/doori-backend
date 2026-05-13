@@ -1,4 +1,4 @@
-package com.doori.doori_backend.auth.domain;
+package com.doori.doori_backend.school.domain;
 
 import com.doori.doori_backend.global.error.ErrorCode;
 import com.doori.doori_backend.global.exception.CustomException;
@@ -7,7 +7,7 @@ import java.util.Arrays;
 public enum School {
     SEJONG_UNIV("sju.ac.kr", "세종대학교"),
     KONKUK_UNIV("konkuk.ac.kr", "건국대학교"),
-    HANYANG_UNIV("hanyang.ac.kr","한양대학교");
+    HANYANG_UNIV("hanyang.ac.kr", "한양대학교");
 
     private final String domain;
     private final String displayName;
@@ -28,8 +28,8 @@ public enum School {
     public static School fromEmail(String email) {
         String domain = email.substring(email.indexOf('@') + 1);
         return Arrays.stream(values())
-            .filter(s -> s.domain.equals(domain))
+            .filter(s -> s.domain.equalsIgnoreCase(domain))
             .findFirst()
-            .orElseThrow(() -> new CustomException(ErrorCode.AUTH_UNSUPPORTED_EMAIL));
+            .orElseThrow(() -> new CustomException(ErrorCode.SCHOOL_UNSUPPORTED_EMAIL));
     }
 }
