@@ -72,6 +72,7 @@ public class AuthService {
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
             throw new CustomException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
+        member.updateLastLoginAt();
         IssuedTokens tokens = issueTokens(member.getId());
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), UserInfo.from(member));
     }

@@ -15,7 +15,10 @@ public enum ErrorCode {
 	AUTH_EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A007", "만료된 토큰입니다."),
 	AUTH_INVALID_CODE(HttpStatus.BAD_REQUEST, "A009", "인증 코드가 올바르지 않습니다."),
 	AUTH_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "A010", "인증 코드가 만료되었습니다."),
-	SCHOOL_UNSUPPORTED_EMAIL(HttpStatus.BAD_REQUEST, "S001", "지원하지 않는 학교 이메일입니다.");
+	SCHOOL_UNSUPPORTED_EMAIL(HttpStatus.BAD_REQUEST, "S001", "지원하지 않는 학교 이메일입니다."),
+	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
+	USER_NICKNAME_DUPLICATE(HttpStatus.CONFLICT, "U002", "이미 사용 중인 닉네임입니다."),
+	USER_LIFESTYLE_PROFILE_REQUIRED(HttpStatus.BAD_REQUEST, "U003", "생활 상황 프로필을 먼저 완성해주세요.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
