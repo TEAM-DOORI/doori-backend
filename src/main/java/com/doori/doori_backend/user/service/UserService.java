@@ -14,7 +14,6 @@ import com.doori.doori_backend.user.dto.request.UpdateProfileRequest;
 import com.doori.doori_backend.user.dto.response.ExploreItem;
 import com.doori.doori_backend.user.dto.response.ExploreResponse;
 import com.doori.doori_backend.user.dto.response.MyProfileResponse;
-import com.doori.doori_backend.user.dto.response.RecommendationUserResponse;
 import com.doori.doori_backend.user.dto.response.RecommendationsResponse;
 import com.doori.doori_backend.user.dto.response.UserProfileResponse;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +26,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +38,7 @@ public class UserService {
     private final LifestyleProfileRepository lifestyleProfileRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional(readOnly = true)
     public MyProfileResponse getMyProfile(Long memberId) {
         Member member = findActiveMember(memberId);
         return MyProfileResponse.from(member);
@@ -55,16 +54,7 @@ public class UserService {
         member.updateProfile(request.name(), request.nickname());
     }
 
-    @Transactional
-    public String updateProfileImage(Long memberId, MultipartFile file) {
-        Member member = findActiveMember(memberId);
-        String extension = getExtension(file.getOriginalFilename());
-        // TODO: S3 업로드 연동 시 실제 URL로 교체
-        String imageUrl = "/profiles/" + memberId + "_" + System.currentTimeMillis() + extension;
-        member.updateProfileImage(imageUrl);
-        return imageUrl;
-    }
-
+    @Transactional(readOnly = true)
     public UserProfileResponse getUserProfile(Long requesterId, Long targetId) {
         Member target = memberRepository.findById(targetId)
             .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
@@ -74,6 +64,7 @@ public class UserService {
         return UserProfileResponse.of(target, matchingScore);
     }
 
+    @Transactional(readOnly = true)
     public RecommendationsResponse getRecommendations(Long memberId) {
         Member member = findActiveMember(memberId);
         LifestyleProfile myProfile = lifestyleProfileRepository.findByMember(member)
@@ -87,18 +78,19 @@ public class UserService {
             MemberStatus.ACTIVE, memberId, PageRequest.of(0, 50)
         );
 
-        List<RecommendationUserResponse> recommendations = candidates.stream()
+        List<ExploreItem> recommendations = candidates.stream()
             .map(profile -> {
                 int score = calculateScore(myProfile, profile);
-                return RecommendationUserResponse.of(profile.getMember(), profile, score, false);
+                return ExploreItem.of(profile.getMember(), profile, score, false);
             })
-            .sorted(Comparator.comparingInt(RecommendationUserResponse::matchingScore).reversed())
+            .sorted(Comparator.comparingInt(ExploreItem::matchingScore).reversed())
             .limit(RECOMMENDATION_LIMIT)
             .toList();
 
         return new RecommendationsResponse(recommendations);
     }
 
+    @Transactional(readOnly = true)
     public ExploreResponse explore(
         Long memberId,
         String residenceType,
@@ -150,10 +142,8 @@ public class UserService {
     }
 
     private int computeMatchingScore(Long requesterId, Long targetId) {
-        Optional<LifestyleProfile> requesterProfile = memberRepository.findById(requesterId)
-            .flatMap(lifestyleProfileRepository::findByMember);
-        Optional<LifestyleProfile> targetProfile = memberRepository.findById(targetId)
-            .flatMap(lifestyleProfileRepository::findByMember);
+        Optional<LifestyleProfile> requesterProfile = lifestyleProfileRepository.findByMemberId(requesterId);
+        Optional<LifestyleProfile> targetProfile = lifestyleProfileRepository.findByMemberId(targetId);
 
         if (requesterProfile.isEmpty() || targetProfile.isEmpty()) {
             return 0;
@@ -205,10 +195,4 @@ public class UserService {
         return Base64.getEncoder().encodeToString(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
     }
 
-    private String getExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "";
-        }
-        return filename.substring(filename.lastIndexOf('.'));
-    }
 }

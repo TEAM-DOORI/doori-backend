@@ -15,6 +15,8 @@ public interface LifestyleProfileRepository extends JpaRepository<LifestyleProfi
 
     Optional<LifestyleProfile> findByMember(Member member);
 
+    Optional<LifestyleProfile> findByMemberId(Long memberId);
+
     @Query("""
         SELECT lp FROM LifestyleProfile lp
         WHERE lp.member.status = :status
