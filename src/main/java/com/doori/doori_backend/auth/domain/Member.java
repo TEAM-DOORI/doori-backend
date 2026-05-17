@@ -51,12 +51,18 @@ public class Member {
     @Column(nullable = false)
     private School school;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'ACTIVE'")
+    private MemberStatus status = MemberStatus.ACTIVE;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    private LocalDateTime lastLoginAt;
 
     @Builder
     public Member(String email, String password, String name, String nickname, Gender gender, School school) {
@@ -66,5 +72,23 @@ public class Member {
         this.nickname = nickname;
         this.gender = gender;
         this.school = school;
+        this.status = MemberStatus.ACTIVE;
+    }
+
+    public void updateProfile(String name, String nickname) {
+        this.name = name;
+        this.nickname = nickname;
+    }
+
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void deactivate() {
+        this.status = MemberStatus.INACTIVE;
+    }
+
+    public void updateLastLoginAt() {
+        this.lastLoginAt = LocalDateTime.now();
     }
 }
