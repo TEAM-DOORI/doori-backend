@@ -7,7 +7,8 @@ import com.doori.doori_backend.user.dto.response.ExploreResponse;
 import com.doori.doori_backend.user.dto.response.MyProfileResponse;
 import com.doori.doori_backend.user.dto.response.RecommendationsResponse;
 import com.doori.doori_backend.user.dto.response.UserProfileResponse;
-import com.doori.doori_backend.user.service.UserService;
+import com.doori.doori_backend.user.service.UserDiscoveryService;
+import com.doori.doori_backend.user.service.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,12 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
+    private final UserProfileService userProfileService;
+    private final UserDiscoveryService userDiscoveryService;
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<MyProfileResponse>> getMyProfile(Authentication authentication) {
         Long memberId = (Long) authentication.getPrincipal();
-        return ResponseEntity.ok(ApiResponse.success(userService.getMyProfile(memberId)));
+        return ResponseEntity.ok(ApiResponse.success(userProfileService.getMyProfile(memberId)));
     }
 
     @PutMapping("/me")
@@ -40,7 +42,7 @@ public class UserController {
         Authentication authentication
     ) {
         Long memberId = (Long) authentication.getPrincipal();
-        userService.updateProfile(memberId, request);
+        userProfileService.updateProfile(memberId, request);
         return ResponseEntity.noContent().build();
     }
 
@@ -50,7 +52,7 @@ public class UserController {
         Authentication authentication
     ) {
         Long requesterId = (Long) authentication.getPrincipal();
-        return ResponseEntity.ok(ApiResponse.success(userService.getUserProfile(requesterId, userId)));
+        return ResponseEntity.ok(ApiResponse.success(userDiscoveryService.getUserProfile(requesterId, userId)));
     }
 
     @GetMapping("/recommendations")
@@ -58,7 +60,7 @@ public class UserController {
         Authentication authentication
     ) {
         Long memberId = (Long) authentication.getPrincipal();
-        return ResponseEntity.ok(ApiResponse.success(userService.getRecommendations(memberId)));
+        return ResponseEntity.ok(ApiResponse.success(userDiscoveryService.getRecommendations(memberId)));
     }
 
     @GetMapping("/explore")
@@ -71,7 +73,7 @@ public class UserController {
     ) {
         Long memberId = (Long) authentication.getPrincipal();
         return ResponseEntity.ok(
-            ApiResponse.success(userService.explore(memberId, residenceType, isSmoker, cursor, limit))
+            ApiResponse.success(userDiscoveryService.explore(memberId, residenceType, isSmoker, cursor, limit))
         );
     }
 
@@ -81,7 +83,7 @@ public class UserController {
         Authentication authentication
     ) {
         Long memberId = (Long) authentication.getPrincipal();
-        userService.deleteAccount(memberId, request);
+        userProfileService.deleteAccount(memberId, request);
         return ResponseEntity.noContent().build();
     }
 }

@@ -3,17 +3,13 @@ package com.doori.doori_backend.user.service;
 import com.doori.doori_backend.auth.domain.Member;
 import com.doori.doori_backend.auth.domain.MemberStatus;
 import com.doori.doori_backend.auth.repository.MemberRepository;
-import com.doori.doori_backend.auth.repository.RefreshTokenRepository;
 import com.doori.doori_backend.global.error.ErrorCode;
 import com.doori.doori_backend.global.exception.CustomException;
 import com.doori.doori_backend.lifestyle.domain.HousingType;
 import com.doori.doori_backend.lifestyle.domain.LifestyleProfile;
 import com.doori.doori_backend.lifestyle.repository.LifestyleProfileRepository;
-import com.doori.doori_backend.user.dto.request.DeleteAccountRequest;
-import com.doori.doori_backend.user.dto.request.UpdateProfileRequest;
 import com.doori.doori_backend.user.dto.response.ExploreItem;
 import com.doori.doori_backend.user.dto.response.ExploreResponse;
-import com.doori.doori_backend.user.dto.response.MyProfileResponse;
 import com.doori.doori_backend.user.dto.response.RecommendationsResponse;
 import com.doori.doori_backend.user.dto.response.UserProfileResponse;
 import java.nio.charset.StandardCharsets;
@@ -23,36 +19,18 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserDiscoveryService {
 
     private static final int RECOMMENDATION_LIMIT = 10;
 
     private final MemberRepository memberRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final LifestyleProfileRepository lifestyleProfileRepository;
-    private final PasswordEncoder passwordEncoder;
-
-    @Transactional(readOnly = true)
-    public MyProfileResponse getMyProfile(Long memberId) {
-        Member member = findActiveMember(memberId);
-        return MyProfileResponse.from(member);
-    }
-
-    @Transactional
-    public void updateProfile(Long memberId, UpdateProfileRequest request) {
-        Member member = findActiveMember(memberId);
-        if (request.nickname() != null
-            && memberRepository.existsByNicknameAndIdNot(request.nickname(), memberId)) {
-            throw new CustomException(ErrorCode.USER_NICKNAME_DUPLICATE);
-        }
-        member.updateProfile(request.name(), request.nickname());
-    }
+    private final MatchingScoreCalculator scoreCalculator;
 
     @Transactional(readOnly = true)
     public UserProfileResponse getUserProfile(Long requesterId, Long targetId) {
@@ -79,10 +57,9 @@ public class UserService {
         );
 
         List<ExploreItem> recommendations = candidates.stream()
-            .map(profile -> {
-                int score = calculateScore(myProfile, profile);
-                return ExploreItem.of(profile.getMember(), profile, score, false);
-            })
+            .map(profile -> ExploreItem.of(
+                profile.getMember(), profile, scoreCalculator.calculate(myProfile, profile), false
+            ))
             .sorted(Comparator.comparingInt(ExploreItem::matchingScore).reversed())
             .limit(RECOMMENDATION_LIMIT)
             .toList();
@@ -115,30 +92,15 @@ public class UserService {
 
         List<ExploreItem> items = page.stream()
             .filter(p -> !p.getMember().getId().equals(memberId))
-            .map(profile -> {
-                int score = myProfile.map(mp -> calculateScore(mp, profile)).orElse(0);
-                return ExploreItem.of(profile.getMember(), profile, score, false);
-            })
+            .map(profile -> ExploreItem.of(
+                profile.getMember(), profile,
+                myProfile.map(mp -> scoreCalculator.calculate(mp, profile)).orElse(0),
+                false
+            ))
             .toList();
 
         String nextCursor = hasMore ? encodeCursor(page.get(page.size() - 1).getMember().getId()) : null;
         return new ExploreResponse(items, nextCursor, hasMore);
-    }
-
-    @Transactional
-    public void deleteAccount(Long memberId, DeleteAccountRequest request) {
-        Member member = findActiveMember(memberId);
-        if (!passwordEncoder.matches(request.password(), member.getPassword())) {
-            throw new CustomException(ErrorCode.AUTH_INVALID_CREDENTIALS);
-        }
-        member.deactivate();
-        refreshTokenRepository.deleteByMemberId(memberId);
-    }
-
-    private Member findActiveMember(Long memberId) {
-        return memberRepository.findById(memberId)
-            .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private int computeMatchingScore(Long requesterId, Long targetId) {
@@ -148,24 +110,13 @@ public class UserService {
         if (requesterProfile.isEmpty() || targetProfile.isEmpty()) {
             return 0;
         }
-        return calculateScore(requesterProfile.get(), targetProfile.get());
+        return scoreCalculator.calculate(requesterProfile.get(), targetProfile.get());
     }
 
-    private int calculateScore(LifestyleProfile a, LifestyleProfile b) {
-        int score = 0;
-        if (a.getHousingType() != null && a.getHousingType().equals(b.getHousingType())) {
-            score += 30;
-        }
-        if (a.getPreferredRegion() != null && a.getPreferredRegion().equals(b.getPreferredRegion())) {
-            score += 30;
-        }
-        if (a.getIsSmoker() != null && a.getIsSmoker().equals(b.getIsSmoker())) {
-            score += 20;
-        }
-        if (a.getMember().getSchool().equals(b.getMember().getSchool())) {
-            score += 20;
-        }
-        return score;
+    private Member findActiveMember(Long memberId) {
+        return memberRepository.findById(memberId)
+            .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private HousingType parseHousingType(String residenceType) {
@@ -194,5 +145,4 @@ public class UserService {
     private String encodeCursor(Long id) {
         return Base64.getEncoder().encodeToString(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
     }
-
 }
