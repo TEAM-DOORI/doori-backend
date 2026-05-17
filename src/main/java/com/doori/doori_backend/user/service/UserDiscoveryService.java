@@ -46,11 +46,8 @@ public class UserDiscoveryService {
     public RecommendationsResponse getRecommendations(Long memberId) {
         Member member = findActiveMember(memberId);
         LifestyleProfile myProfile = lifestyleProfileRepository.findByMember(member)
+            .filter(LifestyleProfile::isComplete)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_LIFESTYLE_PROFILE_REQUIRED));
-
-        if (!myProfile.isComplete()) {
-            throw new CustomException(ErrorCode.USER_LIFESTYLE_PROFILE_REQUIRED);
-        }
 
         List<LifestyleProfile> candidates = lifestyleProfileRepository.findActiveExcluding(
             MemberStatus.ACTIVE, memberId, PageRequest.of(0, 50)
