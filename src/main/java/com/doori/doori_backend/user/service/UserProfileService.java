@@ -35,7 +35,8 @@ public class UserProfileService {
             && memberRepository.existsByNicknameAndIdNot(request.nickname(), memberId)) {
             throw new CustomException(ErrorCode.USER_NICKNAME_DUPLICATE);
         }
-        member.updateProfile(request.name(), request.nickname());
+        String nickname = request.nickname() != null ? request.nickname() : member.getNickname();
+        member.updateProfile(request.name(), nickname);
     }
 
     @Transactional
