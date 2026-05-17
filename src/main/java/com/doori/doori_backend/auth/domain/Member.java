@@ -52,8 +52,8 @@ public class Member {
     private School school;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MemberStatus status;
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'ACTIVE'")
+    private MemberStatus status = MemberStatus.ACTIVE;
 
     @CreatedDate
     @Column(updatable = false)
