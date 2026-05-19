@@ -18,7 +18,9 @@ public enum ErrorCode {
 	SCHOOL_UNSUPPORTED_EMAIL(HttpStatus.BAD_REQUEST, "S001", "지원하지 않는 학교 이메일입니다."),
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
 	USER_NICKNAME_DUPLICATE(HttpStatus.CONFLICT, "U002", "이미 사용 중인 닉네임입니다."),
-	USER_LIFESTYLE_PROFILE_REQUIRED(HttpStatus.BAD_REQUEST, "U003", "생활 상황 프로필을 먼저 완성해주세요.");
+	USER_LIFESTYLE_PROFILE_REQUIRED(HttpStatus.BAD_REQUEST, "U003", "생활 상황 프로필을 먼저 완성해주세요."),
+	POST_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "게시글을 찾을 수 없습니다."),
+	POST_FORBIDDEN(HttpStatus.FORBIDDEN, "P002", "게시글에 대한 접근 권한이 없습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
