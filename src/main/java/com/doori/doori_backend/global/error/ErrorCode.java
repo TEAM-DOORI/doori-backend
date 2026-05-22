@@ -20,7 +20,9 @@ public enum ErrorCode {
 	USER_NICKNAME_DUPLICATE(HttpStatus.CONFLICT, "U002", "이미 사용 중인 닉네임입니다."),
 	USER_LIFESTYLE_PROFILE_REQUIRED(HttpStatus.BAD_REQUEST, "U003", "생활 상황 프로필을 먼저 완성해주세요."),
 	POST_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "게시글을 찾을 수 없습니다."),
-	POST_FORBIDDEN(HttpStatus.FORBIDDEN, "P002", "게시글에 대한 접근 권한이 없습니다.");
+	POST_FORBIDDEN(HttpStatus.FORBIDDEN, "P002", "게시글에 대한 접근 권한이 없습니다."),
+	FAVORITE_ALREADY_EXISTS(HttpStatus.CONFLICT, "F001", "이미 찜한 항목입니다."),
+	FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "F002", "찜 내역을 찾을 수 없습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
