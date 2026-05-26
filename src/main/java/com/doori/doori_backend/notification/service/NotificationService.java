@@ -8,6 +8,7 @@ import com.doori.doori_backend.notification.dto.response.NotificationListRespons
 import com.doori.doori_backend.notification.repository.NotificationRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +26,7 @@ public class NotificationService {
         int fetchSize = DEFAULT_LIMIT + 1;
 
         List<Notification> notifications = notificationRepository.findByReceiverWithCursor(
-            memberId, cursorId, fetchSize);
+            memberId, cursorId, PageRequest.of(0, fetchSize));
 
         boolean hasMore = notifications.size() == fetchSize;
         if (hasMore) {
