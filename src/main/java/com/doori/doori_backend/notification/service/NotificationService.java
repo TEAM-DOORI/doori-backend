@@ -21,7 +21,7 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public NotificationListResponse getNotifications(Long memberId, String cursor) {
-        Long cursorId = (cursor != null && !cursor.isBlank()) ? Long.parseLong(cursor) : null;
+        Long cursorId = parseCursor(cursor);
         int fetchSize = DEFAULT_LIMIT + 1;
 
         List<Notification> notifications = notificationRepository.findByReceiverWithCursor(
@@ -36,25 +36,30 @@ public class NotificationService {
             .map(NotificationItem::from)
             .toList();
 
-        String nextCursor = (hasMore && !items.isEmpty())
-            ? String.valueOf(items.getLast().notificationId())
-            : null;
+        String nextCursor = hasMore ? String.valueOf(items.getLast().notificationId()) : null;
 
-        long unreadCount = notificationRepository.countByReceiverIdAndIsReadFalse(memberId);
+        long unreadCount = notificationRepository.countUnreadByMemberId(memberId);
 
         return new NotificationListResponse(items, unreadCount, nextCursor, hasMore);
     }
 
     @Transactional
     public void markAsRead(Long memberId, Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
+        Notification notification = notificationRepository.findByIdAndReceiverId(notificationId, memberId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
-        if (!notification.getReceiver().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.AUTH_FORBIDDEN);
-        }
-
         notification.markAsRead();
+    }
+
+    private Long parseCursor(String cursor) {
+        if (cursor == null || cursor.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(cursor);
+        } catch (NumberFormatException e) {
+            throw new CustomException(ErrorCode.COMMON_BAD_REQUEST, "유효하지 않은 커서 값입니다.");
+        }
     }
 
     @Transactional

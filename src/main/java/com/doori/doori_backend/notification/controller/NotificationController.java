@@ -30,19 +30,19 @@ public class NotificationController {
     }
 
     @PutMapping("/{notificationId}/read")
-    public ResponseEntity<ApiResponse<Void>> markAsRead(
+    public ResponseEntity<Void> markAsRead(
         @PathVariable Long notificationId,
         Authentication authentication
     ) {
         Long memberId = (Long) authentication.getPrincipal();
         notificationService.markAsRead(memberId, notificationId);
-        return ResponseEntity.ok(ApiResponse.success("읽음 처리되었습니다.", null));
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/read-all")
-    public ResponseEntity<ApiResponse<Void>> markAllAsRead(Authentication authentication) {
+    public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
         Long memberId = (Long) authentication.getPrincipal();
         notificationService.markAllAsRead(memberId);
-        return ResponseEntity.ok(ApiResponse.success("모든 알림을 읽음 처리했습니다.", null));
+        return ResponseEntity.noContent().build();
     }
 }

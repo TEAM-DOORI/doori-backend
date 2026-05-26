@@ -2,6 +2,7 @@ package com.doori.doori_backend.notification.repository;
 
 import com.doori.doori_backend.notification.domain.Notification;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,7 +18,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
         @Param("limit") int limit
     );
 
-    long countByReceiverIdAndIsReadFalse(Long memberId);
+    @Query("SELECT n FROM Notification n WHERE n.id = :notificationId AND n.receiver.id = :memberId")
+    Optional<Notification> findByIdAndReceiverId(
+        @Param("notificationId") Long notificationId,
+        @Param("memberId") Long memberId
+    );
+
+    @Query("SELECT COUNT(n) FROM Notification n WHERE n.receiver.id = :memberId AND n.isRead = false")
+    long countUnreadByMemberId(@Param("memberId") Long memberId);
 
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true, n.readAt = CURRENT_TIMESTAMP WHERE n.receiver.id = :memberId AND n.isRead = false")

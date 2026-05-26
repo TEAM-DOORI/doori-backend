@@ -45,7 +45,7 @@ public class Notification {
 
     private String content;
 
-    @Column(nullable = false)
+    @Column(name = "is_read", nullable = false)
     private boolean isRead;
 
     private Long referenceId;
@@ -71,6 +71,9 @@ public class Notification {
     }
 
     public void markAsRead() {
+        if (this.isRead) {
+            return;
+        }
         this.isRead = true;
         this.readAt = LocalDateTime.now();
     }
