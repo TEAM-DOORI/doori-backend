@@ -22,7 +22,8 @@ public enum ErrorCode {
 	POST_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "게시글을 찾을 수 없습니다."),
 	POST_FORBIDDEN(HttpStatus.FORBIDDEN, "P002", "게시글에 대한 접근 권한이 없습니다."),
 	FAVORITE_ALREADY_EXISTS(HttpStatus.CONFLICT, "F001", "이미 찜한 항목입니다."),
-	FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "F002", "찜 내역을 찾을 수 없습니다.");
+	FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "F002", "찜 내역을 찾을 수 없습니다."),
+	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "존재하지 않는 알림입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
