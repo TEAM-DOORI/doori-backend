@@ -23,6 +23,9 @@ public enum ErrorCode {
 	POST_FORBIDDEN(HttpStatus.FORBIDDEN, "P002", "게시글에 대한 접근 권한이 없습니다."),
 	FAVORITE_ALREADY_EXISTS(HttpStatus.CONFLICT, "F001", "이미 찜한 항목입니다."),
 	FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "F002", "찜 내역을 찾을 수 없습니다."),
+	BLOCK_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "B001", "자기 자신을 차단할 수 없습니다."),
+	BLOCK_DUPLICATE(HttpStatus.CONFLICT, "B002", "이미 차단한 사용자입니다."),
+	BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "B003", "차단 내역을 찾을 수 없습니다."),
 	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "존재하지 않는 알림입니다.");
 
 	private final HttpStatus httpStatus;

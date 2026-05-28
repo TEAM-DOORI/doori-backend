@@ -3,6 +3,7 @@ package com.doori.doori_backend.post.service;
 import com.doori.doori_backend.auth.domain.Member;
 import com.doori.doori_backend.auth.domain.MemberStatus;
 import com.doori.doori_backend.auth.repository.MemberRepository;
+import com.doori.doori_backend.block.service.BlockService;
 import com.doori.doori_backend.global.error.ErrorCode;
 import com.doori.doori_backend.global.exception.CustomException;
 import com.doori.doori_backend.post.domain.Post;
@@ -33,6 +34,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
+    private final BlockService blockService;
 
     /**
      * 게시글 생성
@@ -61,18 +63,18 @@ public class PostService {
     }
 
     /**
-     * 게시글 목록 조회 (페이지네이션 + 타입 필터)
+     * 게시글 목록 조회 (페이지네이션 + 타입 필터 + 차단 유저 제외)
+     * @param memberId    인증된 사용자 ID
      * @param postTypeStr postType 문자열 (null이면 전체)
      * @param page        0-based 페이지 번호
      * @param size        페이지 크기
      * @return 목록 + 전체 개수 래퍼
      */
     @Transactional(readOnly = true)
-    public Wrapper getPosts(String postTypeStr, int page, int size) {
-        // postTypeStr이 null이거나 빈 문자열이면 전체 조회
+    public Wrapper getPosts(Long memberId, String postTypeStr, int page, int size) {
         PostType postType = (postTypeStr == null || postTypeStr.isBlank()) ? null : parsePostType(postTypeStr);
         Pageable pageable = PageRequest.of(page, size);
-        Page<Post> postPage = postRepository.findAllByFilter(postType, pageable);
+        Page<Post> postPage = postRepository.findAllByFilterExcludingAuthors(memberId, postType, pageable);
 
         List<PostListResponse> posts = postPage.getContent()
             .stream()
@@ -83,13 +85,17 @@ public class PostService {
     }
 
     /**
-     * 게시글 단건 조회
-     * @param postId 게시글 ID
+     * 게시글 단건 조회 (차단한 유저의 게시글은 404 반환)
+     * @param memberId 인증된 사용자 ID
+     * @param postId   게시글 ID
      * @return 게시글 상세 응답
      */
     @Transactional(readOnly = true)
-    public PostResponse getPost(Long postId) {
+    public PostResponse getPost(Long memberId, Long postId) {
         Post post = findPost(postId);
+        if (blockService.isBlocked(memberId, post.getAuthor().getId())) {
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
+        }
         return PostResponse.from(post);
     }
 
