@@ -25,7 +25,8 @@ public enum ErrorCode {
 	FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "F002", "찜 내역을 찾을 수 없습니다."),
 	BLOCK_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "B001", "자기 자신을 차단할 수 없습니다."),
 	BLOCK_DUPLICATE(HttpStatus.CONFLICT, "B002", "이미 차단한 사용자입니다."),
-	BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "B003", "차단 내역을 찾을 수 없습니다.");
+	BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "B003", "차단 내역을 찾을 수 없습니다."),
+	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "존재하지 않는 알림입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
