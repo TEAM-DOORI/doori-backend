@@ -10,7 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,9 +41,8 @@ public class PostController {
     @PostMapping
     public ResponseEntity<ApiResponse<PostResponse>> createPost(
         @RequestBody @Valid PostCreateRequest request,
-        Authentication authentication
+        @AuthenticationPrincipal Long memberId
     ) {
-        Long memberId = (Long) authentication.getPrincipal();
         PostResponse response = postService.createPost(memberId, request);
         return ResponseEntity
             .status(HttpStatus.CREATED)
@@ -56,12 +55,11 @@ public class PostController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<Wrapper>> getPosts(
-        Authentication authentication,
+        @AuthenticationPrincipal Long memberId,
         @RequestParam(required = false) String postType,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        Long memberId = (Long) authentication.getPrincipal();
         Wrapper response = postService.getPosts(memberId, postType, page, size);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -73,9 +71,8 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponse>> getPost(
         @PathVariable Long postId,
-        Authentication authentication
+        @AuthenticationPrincipal Long memberId
     ) {
-        Long memberId = (Long) authentication.getPrincipal();
         PostResponse response = postService.getPost(memberId, postId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -88,9 +85,8 @@ public class PostController {
     public ResponseEntity<Void> updatePost(
         @PathVariable Long postId,
         @RequestBody @Valid PostUpdateRequest request,
-        Authentication authentication
+        @AuthenticationPrincipal Long memberId
     ) {
-        Long memberId = (Long) authentication.getPrincipal();
         postService.updatePost(memberId, postId, request);
         return ResponseEntity.noContent().build();
     }
@@ -102,9 +98,8 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
         @PathVariable Long postId,
-        Authentication authentication
+        @AuthenticationPrincipal Long memberId
     ) {
-        Long memberId = (Long) authentication.getPrincipal();
         postService.deletePost(memberId, postId);
         return ResponseEntity.noContent().build();
     }

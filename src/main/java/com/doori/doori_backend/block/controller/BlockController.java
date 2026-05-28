@@ -7,7 +7,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,9 +29,8 @@ public class BlockController {
     @PostMapping("/{targetUserId}")
     public ResponseEntity<Void> blockUser(
         @PathVariable Long targetUserId,
-        Authentication authentication
+        @AuthenticationPrincipal Long memberId
     ) {
-        Long memberId = (Long) authentication.getPrincipal();
         blockService.blockUser(memberId, targetUserId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -43,9 +42,8 @@ public class BlockController {
     @DeleteMapping("/{targetUserId}")
     public ResponseEntity<Void> unblockUser(
         @PathVariable Long targetUserId,
-        Authentication authentication
+        @AuthenticationPrincipal Long memberId
     ) {
-        Long memberId = (Long) authentication.getPrincipal();
         blockService.unblockUser(memberId, targetUserId);
         return ResponseEntity.noContent().build();
     }
@@ -56,9 +54,8 @@ public class BlockController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<BlockedUserResponse>>> getBlockedUsers(
-        Authentication authentication
+        @AuthenticationPrincipal Long memberId
     ) {
-        Long memberId = (Long) authentication.getPrincipal();
         List<BlockedUserResponse> response = blockService.getBlockedUsers(memberId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
