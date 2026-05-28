@@ -74,11 +74,7 @@ public class PostService {
     public Wrapper getPosts(Long memberId, String postTypeStr, int page, int size) {
         PostType postType = (postTypeStr == null || postTypeStr.isBlank()) ? null : parsePostType(postTypeStr);
         Pageable pageable = PageRequest.of(page, size);
-        List<Long> blockedIds = blockService.getBlockedTargetIds(memberId);
-
-        Page<Post> postPage = blockedIds.isEmpty()
-            ? postRepository.findAllByFilter(postType, pageable)
-            : postRepository.findAllByFilterExcludingAuthors(postType, blockedIds, pageable);
+        Page<Post> postPage = postRepository.findAllByFilterExcludingAuthors(memberId, postType, pageable);
 
         List<PostListResponse> posts = postPage.getContent()
             .stream()

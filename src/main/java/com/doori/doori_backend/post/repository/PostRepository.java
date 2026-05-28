@@ -24,18 +24,22 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     /**
      * postType 필터링 + 차단 유저 제외 + 최신순 정렬 목록 조회
-     * - blockedIds가 비어 있지 않을 때만 호출한다 (빈 컬렉션 IN절 오류 방지)
+     * - NOT EXISTS 서브쿼리로 Block 테이블을 직접 조회하여 성능 개선
      */
     @Query("""
         SELECT p FROM Post p
         JOIN FETCH p.author
         WHERE (:postType IS NULL OR p.postType = :postType)
-          AND p.author.id NOT IN :blockedIds
+          AND NOT EXISTS (
+              SELECT 1 FROM Block b
+              WHERE b.member.id = :memberId
+              AND b.target.id = p.author.id
+          )
         ORDER BY p.createdAt DESC
         """)
     Page<Post> findAllByFilterExcludingAuthors(
+        @Param("memberId") Long memberId,
         @Param("postType") PostType postType,
-        @Param("blockedIds") List<Long> blockedIds,
         Pageable pageable
     );
 }
