@@ -22,11 +22,12 @@ public class NotificationController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<NotificationListResponse>> getNotifications(
+        @RequestParam(required = false) String type,
         @RequestParam(required = false) String cursor,
         Authentication authentication
     ) {
         Long memberId = (Long) authentication.getPrincipal();
-        return ResponseEntity.ok(ApiResponse.success(notificationService.getNotifications(memberId, cursor)));
+        return ResponseEntity.ok(ApiResponse.success(notificationService.getNotifications(memberId, type, cursor)));
     }
 
     @PutMapping("/{notificationId}/read")

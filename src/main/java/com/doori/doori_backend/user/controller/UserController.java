@@ -5,6 +5,7 @@ import com.doori.doori_backend.user.dto.request.DeleteAccountRequest;
 import com.doori.doori_backend.user.dto.request.UpdateProfileRequest;
 import com.doori.doori_backend.user.dto.response.ExploreResponse;
 import com.doori.doori_backend.user.dto.response.MyProfileResponse;
+import com.doori.doori_backend.user.dto.response.ProfileCardResponse;
 import com.doori.doori_backend.user.dto.response.RecommendationsResponse;
 import com.doori.doori_backend.user.dto.response.UserProfileResponse;
 import com.doori.doori_backend.user.service.UserDiscoveryService;
@@ -75,6 +76,15 @@ public class UserController {
         return ResponseEntity.ok(
             ApiResponse.success(userDiscoveryService.explore(memberId, residenceType, isSmoker, cursor, limit))
         );
+    }
+
+    @GetMapping("/{userId}/card")
+    public ResponseEntity<ApiResponse<ProfileCardResponse>> getProfileCard(
+        @PathVariable Long userId,
+        Authentication authentication
+    ) {
+        Long requesterId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(ApiResponse.success(userDiscoveryService.getProfileCard(requesterId, userId)));
     }
 
     @DeleteMapping("/me")

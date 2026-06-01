@@ -10,6 +10,7 @@ import com.doori.doori_backend.lifestyle.domain.LifestyleProfile;
 import com.doori.doori_backend.lifestyle.repository.LifestyleProfileRepository;
 import com.doori.doori_backend.user.dto.response.ExploreItem;
 import com.doori.doori_backend.user.dto.response.ExploreResponse;
+import com.doori.doori_backend.user.dto.response.ProfileCardResponse;
 import com.doori.doori_backend.user.dto.response.RecommendationsResponse;
 import com.doori.doori_backend.user.dto.response.UserProfileResponse;
 import java.nio.charset.StandardCharsets;
@@ -98,6 +99,25 @@ public class UserDiscoveryService {
 
         String nextCursor = hasMore ? encodeCursor(page.get(page.size() - 1).getMember().getId()) : null;
         return new ExploreResponse(items, nextCursor, hasMore);
+    }
+
+    @Transactional(readOnly = true)
+    public ProfileCardResponse getProfileCard(Long requesterId, Long targetId) {
+        Member target = memberRepository.findById(targetId)
+            .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        Optional<LifestyleProfile> requesterProfile = lifestyleProfileRepository.findByMemberId(requesterId);
+        Optional<LifestyleProfile> targetProfile = lifestyleProfileRepository.findByMemberId(targetId);
+
+        int matchingScore = 0;
+        List<String> matched = List.of();
+        if (requesterProfile.isPresent() && targetProfile.isPresent()) {
+            matchingScore = scoreCalculator.calculate(requesterProfile.get(), targetProfile.get());
+            matched = scoreCalculator.matchedCriteria(requesterProfile.get(), targetProfile.get());
+        }
+
+        return ProfileCardResponse.of(target, targetProfile.orElse(null), matchingScore, matched);
     }
 
     private int computeMatchingScore(Long requesterId, Long targetId) {

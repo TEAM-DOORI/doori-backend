@@ -3,6 +3,7 @@ package com.doori.doori_backend.notification.service;
 import com.doori.doori_backend.global.error.ErrorCode;
 import com.doori.doori_backend.global.exception.CustomException;
 import com.doori.doori_backend.notification.domain.Notification;
+import com.doori.doori_backend.notification.domain.NotificationType;
 import com.doori.doori_backend.notification.dto.response.NotificationItem;
 import com.doori.doori_backend.notification.dto.response.NotificationListResponse;
 import com.doori.doori_backend.notification.repository.NotificationRepository;
@@ -21,12 +22,13 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
-    public NotificationListResponse getNotifications(Long memberId, String cursor) {
+    public NotificationListResponse getNotifications(Long memberId, String typeParam, String cursor) {
         Long cursorId = parseCursor(cursor);
+        NotificationType type = parseType(typeParam);
         int fetchSize = DEFAULT_LIMIT + 1;
 
         List<Notification> notifications = notificationRepository.findByReceiverWithCursor(
-            memberId, cursorId, PageRequest.of(0, fetchSize));
+            memberId, cursorId, type, PageRequest.of(0, fetchSize));
 
         boolean hasMore = notifications.size() == fetchSize;
         if (hasMore) {
@@ -60,6 +62,17 @@ public class NotificationService {
             return Long.parseLong(cursor);
         } catch (NumberFormatException e) {
             throw new CustomException(ErrorCode.COMMON_BAD_REQUEST, "유효하지 않은 커서 값입니다.");
+        }
+    }
+
+    private NotificationType parseType(String type) {
+        if (type == null || type.isBlank()) {
+            return null;
+        }
+        try {
+            return NotificationType.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(ErrorCode.COMMON_BAD_REQUEST, "유효하지 않은 알림 타입입니다.");
         }
     }
 
