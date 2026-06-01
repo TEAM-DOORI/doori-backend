@@ -1,6 +1,6 @@
 package com.doori.doori_backend.auth.service;
 
-import com.doori.doori_backend.auth.domain.Member;
+import com.doori.doori_backend.user.domain.Member;
 import com.doori.doori_backend.school.domain.School;
 import com.doori.doori_backend.auth.domain.RefreshToken;
 import com.doori.doori_backend.auth.dto.request.EmailSendRequest;
@@ -14,7 +14,7 @@ import com.doori.doori_backend.auth.dto.response.SignupResponse;
 import com.doori.doori_backend.auth.dto.response.TokenResponse;
 import com.doori.doori_backend.auth.dto.response.UserInfo;
 import com.doori.doori_backend.auth.jwt.JwtProvider;
-import com.doori.doori_backend.auth.repository.MemberRepository;
+import com.doori.doori_backend.user.repository.MemberRepository;
 import com.doori.doori_backend.auth.repository.RefreshTokenRepository;
 import com.doori.doori_backend.global.error.ErrorCode;
 import com.doori.doori_backend.global.exception.CustomException;

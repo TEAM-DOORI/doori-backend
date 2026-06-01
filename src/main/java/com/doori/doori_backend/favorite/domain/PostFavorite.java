@@ -1,6 +1,6 @@
 package com.doori.doori_backend.favorite.domain;
 
-import com.doori.doori_backend.auth.domain.Member;
+import com.doori.doori_backend.user.domain.Member;
 import com.doori.doori_backend.post.domain.Post;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
