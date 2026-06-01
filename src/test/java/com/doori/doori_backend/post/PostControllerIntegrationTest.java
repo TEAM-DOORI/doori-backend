@@ -9,9 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 
-import com.doori.doori_backend.auth.domain.Gender;
-import com.doori.doori_backend.auth.domain.Member;
-import com.doori.doori_backend.auth.repository.MemberRepository;
+import com.doori.doori_backend.user.domain.Gender;
+import com.doori.doori_backend.user.domain.Member;
+import com.doori.doori_backend.user.repository.MemberRepository;
 import com.doori.doori_backend.post.domain.Post;
 import com.doori.doori_backend.post.domain.PostType;
 import com.doori.doori_backend.post.repository.PostRepository;

@@ -1,4 +1,4 @@
-package com.doori.doori_backend.auth.domain;
+package com.doori.doori_backend.user.domain;
 
 import com.doori.doori_backend.school.domain.School;
 import jakarta.persistence.Column;

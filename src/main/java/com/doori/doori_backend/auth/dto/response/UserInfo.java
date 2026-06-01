@@ -1,6 +1,6 @@
 package com.doori.doori_backend.auth.dto.response;
 
-import com.doori.doori_backend.auth.domain.Member;
+import com.doori.doori_backend.user.domain.Member;
 
 public record UserInfo(
     Long userId,

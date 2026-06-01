@@ -1,4 +1,4 @@
-package com.doori.doori_backend.auth.domain;
+package com.doori.doori_backend.user.domain;
 
 public enum MemberStatus {
     ACTIVE, INACTIVE, BANNED
