@@ -4,8 +4,7 @@ import com.doori.doori_backend.user.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.Convert;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,7 +35,7 @@ public class Notification {
     @JoinColumn(name = "member_id", nullable = false)
     private Member receiver;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = NotificationTypeConverter.class)
     @Column(nullable = false)
     private NotificationType type;
 
