@@ -54,6 +54,11 @@ public class NotificationService {
         notification.markAsRead();
     }
 
+    @Transactional
+    public void markAllAsRead(Long memberId) {
+        notificationRepository.markAllAsReadByMemberId(memberId);
+    }
+
     private Long parseCursor(String cursor) {
         if (cursor == null || cursor.isBlank()) {
             return null;
@@ -74,10 +79,5 @@ public class NotificationService {
         } catch (IllegalArgumentException e) {
             throw new CustomException(ErrorCode.COMMON_BAD_REQUEST, "유효하지 않은 알림 타입입니다.");
         }
-    }
-
-    @Transactional
-    public void markAllAsRead(Long memberId) {
-        notificationRepository.markAllAsReadByMemberId(memberId);
     }
 }

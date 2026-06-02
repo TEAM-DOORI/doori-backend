@@ -77,7 +77,7 @@ public class UserDiscoveryService {
         long cursorId = decodeCursor(cursor);
 
         List<LifestyleProfile> results = lifestyleProfileRepository.findForExplore(
-            MemberStatus.ACTIVE, housingType, isSmoker, cursorId,
+            MemberStatus.ACTIVE, memberId, housingType, isSmoker, cursorId,
             PageRequest.of(0, limit + 1)
         );
 
@@ -89,7 +89,6 @@ public class UserDiscoveryService {
         );
 
         List<ExploreItem> items = page.stream()
-            .filter(p -> !p.getMember().getId().equals(memberId))
             .map(profile -> ExploreItem.of(
                 profile.getMember(), profile,
                 myProfile.map(mp -> scoreCalculator.calculate(mp, profile)).orElse(0),
