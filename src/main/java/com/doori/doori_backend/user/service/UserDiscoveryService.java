@@ -68,12 +68,11 @@ public class UserDiscoveryService {
     @Transactional(readOnly = true)
     public ExploreResponse explore(
         Long memberId,
-        String residenceType,
+        HousingType housingType,
         Boolean isSmoker,
         String cursor,
         int limit
     ) {
-        HousingType housingType = parseHousingType(residenceType);
         long cursorId = decodeCursor(cursor);
 
         List<LifestyleProfile> results = lifestyleProfileRepository.findForExplore(
@@ -133,17 +132,6 @@ public class UserDiscoveryService {
         return memberRepository.findById(memberId)
             .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    private HousingType parseHousingType(String residenceType) {
-        if (residenceType == null || residenceType.isBlank()) {
-            return null;
-        }
-        try {
-            return HousingType.fromValue(residenceType);
-        } catch (IllegalArgumentException e) {
-            throw new CustomException(ErrorCode.COMMON_BAD_REQUEST);
-        }
     }
 
     private long decodeCursor(String cursor) {

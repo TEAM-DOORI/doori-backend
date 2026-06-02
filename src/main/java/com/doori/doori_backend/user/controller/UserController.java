@@ -8,6 +8,7 @@ import com.doori.doori_backend.user.dto.response.MyProfileResponse;
 import com.doori.doori_backend.user.dto.response.ProfileCardResponse;
 import com.doori.doori_backend.user.dto.response.RecommendationsResponse;
 import com.doori.doori_backend.user.dto.response.UserProfileResponse;
+import com.doori.doori_backend.lifestyle.domain.HousingType;
 import com.doori.doori_backend.user.service.UserDiscoveryService;
 import com.doori.doori_backend.user.service.UserProfileService;
 import jakarta.validation.Valid;
@@ -66,7 +67,7 @@ public class UserController {
 
     @GetMapping("/explore")
     public ResponseEntity<ApiResponse<ExploreResponse>> explore(
-        @RequestParam(required = false) String residenceType,
+        @RequestParam(required = false) HousingType residenceType,
         @RequestParam(required = false) Boolean isSmoker,
         @RequestParam(required = false) String cursor,
         @RequestParam(defaultValue = "20") int limit,

@@ -22,9 +22,8 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
-    public NotificationListResponse getNotifications(Long memberId, String typeParam, String cursor) {
+    public NotificationListResponse getNotifications(Long memberId, NotificationType type, String cursor) {
         Long cursorId = parseCursor(cursor);
-        NotificationType type = parseType(typeParam);
         int fetchSize = DEFAULT_LIMIT + 1;
 
         List<Notification> notifications = notificationRepository.findByReceiverWithCursor(
@@ -70,14 +69,4 @@ public class NotificationService {
         }
     }
 
-    private NotificationType parseType(String type) {
-        if (type == null || type.isBlank()) {
-            return null;
-        }
-        try {
-            return NotificationType.valueOf(type.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new CustomException(ErrorCode.COMMON_BAD_REQUEST, "유효하지 않은 알림 타입입니다.");
-        }
-    }
 }

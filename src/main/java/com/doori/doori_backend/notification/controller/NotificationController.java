@@ -1,6 +1,7 @@
 package com.doori.doori_backend.notification.controller;
 
 import com.doori.doori_backend.global.response.ApiResponse;
+import com.doori.doori_backend.notification.domain.NotificationType;
 import com.doori.doori_backend.notification.dto.response.NotificationListResponse;
 import com.doori.doori_backend.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class NotificationController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<NotificationListResponse>> getNotifications(
-        @RequestParam(required = false) String type,
+        @RequestParam(required = false) NotificationType type,
         @RequestParam(required = false) String cursor,
         Authentication authentication
     ) {
