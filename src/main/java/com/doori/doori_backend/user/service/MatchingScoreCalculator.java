@@ -52,11 +52,31 @@ public class MatchingScoreCalculator {
 
     public List<String> matchedCriteria(LifestyleProfile a, LifestyleProfile b) {
         List<String> matched = new ArrayList<>();
-        if (a.getIsSmoker() != null && a.getIsSmoker().equals(b.getIsSmoker())) matched.add("SMOKING");
-        if (a.getSleepTime() != null && a.getSleepTime().equals(b.getSleepTime())) matched.add("SLEEP_TIME");
-        if (a.getWakeUpTime() != null && a.getWakeUpTime().equals(b.getWakeUpTime())) matched.add("WAKE_UP_TIME");
-        if (a.getCleaningCycle() != null && a.getCleaningCycle().equals(b.getCleaningCycle())) matched.add("CLEANING_CYCLE");
-        if (a.getAtmosphere() != null && a.getAtmosphere().equals(b.getAtmosphere())) matched.add("ATMOSPHERE");
+
+        if (a.getIsSmoker() != null && a.getIsSmoker().equals(b.getIsSmoker())) {
+            matched.add("SMOKING");
+        }
+        if (a.getSleepTime() != null && a.getSleepTime().equals(b.getSleepTime())) {
+            matched.add("SLEEP_TIME");
+        }
+        if (a.getWakeUpTime() != null && a.getWakeUpTime().equals(b.getWakeUpTime())) {
+            matched.add("WAKE_UP_TIME");
+        }
+        if (a.getCleaningCycle() != null && a.getCleaningCycle().equals(b.getCleaningCycle())) {
+            matched.add("CLEANING_CYCLE");
+        }
+        if (a.getCleanlinessLevel() != null && b.getCleanlinessLevel() != null
+            && a.getCleanlinessLevel() == b.getCleanlinessLevel()) {
+            matched.add("CLEANLINESS_LEVEL");
+        }
+        if (a.getNoiseSensitivity() != null && b.getNoiseSensitivity() != null
+            && a.getNoiseSensitivity() == b.getNoiseSensitivity()) {
+            matched.add("NOISE_SENSITIVITY");
+        }
+        if (a.getAtmosphere() != null && a.getAtmosphere().equals(b.getAtmosphere())) {
+            matched.add("ATMOSPHERE");
+        }
+
         return matched;
     }
 
