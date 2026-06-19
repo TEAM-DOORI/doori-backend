@@ -9,6 +9,7 @@ import com.doori.doori_backend.chat.dto.request.ChatMessageRequest;
 import com.doori.doori_backend.chat.dto.request.DmMessageRequest;
 import com.doori.doori_backend.chat.dto.response.ChatMessageResponse;
 import com.doori.doori_backend.chat.dto.response.SliceResponse;
+import com.doori.doori_backend.chat.redis.ChatRedisSubscriptionService;
 import com.doori.doori_backend.chat.repository.ChatMessageRepository;
 import com.doori.doori_backend.chat.repository.ChatRoomMemberRepository;
 import com.doori.doori_backend.global.error.ErrorCode;
@@ -16,9 +17,6 @@ import com.doori.doori_backend.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,14 +28,12 @@ public class ChatService {
     private final ChatMessageRepository messageRepository;
     private final ChatRoomMemberRepository memberRepository;
     private final MemberRepository mutableMemberRepository;
-    private final RedisMessageListenerContainer listenerContainer;
-    private final MessageListenerAdapter chatMessageListenerAdapter;
+    private final ChatRedisSubscriptionService subscriptionService;
 
     @Transactional
     public ChatMessageResponse sendMessage(ChatMessageRequest request, Long memberId) {
         validateMember(request.roomId(), memberId);
         Member sender = findMember(memberId);
-
         ChatMessage saved = messageRepository.save(
             ChatMessage.of(request.roomId(), memberId, sender.getNickname(),
                 request.type(), request.content())
@@ -45,11 +41,11 @@ public class ChatService {
         return ChatMessageResponse.from(saved);
     }
 
+    // DM 메시지 저장 — 라우팅은 room 기반 Redis Pub/Sub으로 일원화 (컨트롤러에서 publish)
     @Transactional
     public ChatMessageResponse sendDm(DmMessageRequest request, Long memberId) {
         validateMember(request.roomId(), memberId);
         Member sender = findMember(memberId);
-
         ChatMessage saved = messageRepository.save(
             ChatMessage.of(request.roomId(), memberId, sender.getNickname(),
                 request.type(), request.content())
@@ -59,17 +55,12 @@ public class ChatService {
 
     @Transactional
     public ChatMessageResponse enterRoom(Long roomId, Long memberId) {
+        // 멤버십 검증 — 비초대 사용자의 자동 가입 방지
+        validateMember(roomId, memberId);
         Member member = findMember(memberId);
 
-        memberRepository.findByRoomIdAndMemberId(roomId, memberId)
-            .ifPresentOrElse(
-                m -> {},
-                () -> memberRepository.save(ChatRoomMember.of(roomId, memberId))
-            );
-
-        // 채팅방 입장 시 Redis 채널 구독 등록 (서버 재시작 후 복구 포함)
-        listenerContainer.addMessageListener(
-            chatMessageListenerAdapter, new ChannelTopic("chat:room:" + roomId));
+        // 이 인스턴스의 Redis 구독 활성화 (멱등, 중복 등록 안 함)
+        subscriptionService.subscribe(roomId);
 
         ChatMessage systemMsg = ChatMessage.of(
             roomId, memberId, member.getNickname(),
@@ -79,10 +70,17 @@ public class ChatService {
 
     @Transactional
     public ChatMessageResponse leaveRoom(Long roomId, Long memberId) {
+        // 비멤버의 가짜 퇴장 메시지 방지
+        validateMember(roomId, memberId);
         Member member = findMember(memberId);
 
         memberRepository.findByRoomIdAndMemberId(roomId, memberId)
             .ifPresent(memberRepository::delete);
+
+        // 방에 더 이상 멤버가 없으면 Redis 구독 해제
+        if (!memberRepository.existsByRoomId(roomId)) {
+            subscriptionService.unsubscribe(roomId);
+        }
 
         ChatMessage systemMsg = ChatMessage.of(
             roomId, memberId, member.getNickname(),
@@ -102,15 +100,6 @@ public class ChatService {
         if (!memberRepository.existsByRoomIdAndMemberId(roomId, memberId)) {
             throw new CustomException(ErrorCode.CHAT_ROOM_FORBIDDEN);
         }
-    }
-
-    // DM 방에서 나(senderId)를 제외한 수신자 ID 반환
-    public Long findDmReceiverId(Long roomId, Long senderId) {
-        return memberRepository.findByRoomId(roomId).stream()
-            .map(ChatRoomMember::getMemberId)
-            .filter(id -> !id.equals(senderId))
-            .findFirst()
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private Member findMember(Long memberId) {

@@ -20,7 +20,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(
     name = "chat_message",
-    indexes = @Index(name = "idx_chat_message_room_created", columnList = "room_id, created_at DESC")
+    indexes = @Index(name = "idx_chat_message_room_id", columnList = "room_id, id DESC")
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

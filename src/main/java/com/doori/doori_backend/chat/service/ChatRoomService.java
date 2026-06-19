@@ -1,23 +1,23 @@
 package com.doori.doori_backend.chat.service;
 
-import com.doori.doori_backend.auth.domain.Member;
 import com.doori.doori_backend.auth.repository.MemberRepository;
 import com.doori.doori_backend.chat.domain.ChatRoom;
 import com.doori.doori_backend.chat.domain.ChatRoomMember;
 import com.doori.doori_backend.chat.domain.RoomType;
 import com.doori.doori_backend.chat.dto.request.CreateRoomRequest;
 import com.doori.doori_backend.chat.dto.response.ChatRoomResponse;
+import com.doori.doori_backend.chat.redis.ChatRedisSubscriptionService;
 import com.doori.doori_backend.chat.repository.ChatRoomMemberRepository;
 import com.doori.doori_backend.chat.repository.ChatRoomRepository;
 import com.doori.doori_backend.global.error.ErrorCode;
 import com.doori.doori_backend.global.exception.CustomException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -28,8 +28,7 @@ public class ChatRoomService {
     private final ChatRoomRepository roomRepository;
     private final ChatRoomMemberRepository memberRepository;
     private final MemberRepository mutableMemberRepository;
-    private final RedisMessageListenerContainer listenerContainer;
-    private final MessageListenerAdapter chatMessageListenerAdapter;
+    private final ChatRedisSubscriptionService subscriptionService;
 
     public List<ChatRoomResponse> getRooms(Long memberId) {
         return roomRepository.findAllByMemberId(memberId).stream()
@@ -41,16 +40,21 @@ public class ChatRoomService {
     public ChatRoomResponse createGroup(CreateRoomRequest request, Long creatorId) {
         ChatRoom room = roomRepository.save(ChatRoom.createGroup(request.name()));
 
+        // creatorId를 memberIds에서 제거하고 중복 제거 — UniqueConstraint 위반 방지
+        Set<Long> inviteeIds = new LinkedHashSet<>(request.memberIds());
+        inviteeIds.remove(creatorId);
+
         List<ChatRoomMember> members = new ArrayList<>();
         members.add(ChatRoomMember.of(room.getId(), creatorId));
-        request.memberIds().forEach(id -> members.add(ChatRoomMember.of(room.getId(), id)));
+        inviteeIds.forEach(id -> members.add(ChatRoomMember.of(room.getId(), id)));
         memberRepository.saveAll(members);
 
-        registerRedisSubscription(room.getId());
+        subscriptionService.subscribe(room.getId());
         return ChatRoomResponse.from(room);
     }
 
-    @Transactional
+    // SERIALIZABLE 격리 수준으로 동시 요청 시 DM 방 중복 생성 방지
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public ChatRoomResponse getOrCreateDm(Long targetMemberId, Long requesterId) {
         if (targetMemberId.equals(requesterId)) {
             throw new CustomException(ErrorCode.CHAT_DM_SELF_NOT_ALLOWED);
@@ -59,7 +63,6 @@ public class ChatRoomService {
         return roomRepository.findDmRoom(RoomType.DM, requesterId, targetMemberId)
             .map(ChatRoomResponse::from)
             .orElseGet(() -> {
-                // 대상 멤버 존재 여부 확인
                 if (!mutableMemberRepository.existsById(targetMemberId)) {
                     throw new CustomException(ErrorCode.USER_NOT_FOUND);
                 }
@@ -68,13 +71,8 @@ public class ChatRoomService {
                     ChatRoomMember.of(room.getId(), requesterId),
                     ChatRoomMember.of(room.getId(), targetMemberId)
                 ));
-                registerRedisSubscription(room.getId());
+                subscriptionService.subscribe(room.getId());
                 return ChatRoomResponse.from(room);
             });
-    }
-
-    private void registerRedisSubscription(Long roomId) {
-        listenerContainer.addMessageListener(
-            chatMessageListenerAdapter, new ChannelTopic("chat:room:" + roomId));
     }
 }
