@@ -1,5 +1,6 @@
 package com.doori.doori_backend.chat.config;
 
+import com.doori.doori_backend.chat.redis.ChatSystemSubscriber;
 import com.doori.doori_backend.chat.redis.RedisSubscriber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -34,13 +35,23 @@ public class ChatRedisConfig {
             RedisConnectionFactory factory) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(factory);
-        // 컨텍스트 로드 시 Redis에 즉시 연결하지 않음 — 첫 addMessageListener() 호출 시 연결
-        container.setAutoStartup(false);
+        // autoStartup=true(기본값) — Spring이 start()를 호출하여 컨테이너를 RUNNING 상태로 만듦
+        // 이후 첫 addMessageListener() 호출 시 실제 Redis SUBSCRIBE 전송
         return container;
     }
 
+    // 채팅 메시지 구독용 어댑터
     @Bean
     public MessageListenerAdapter chatMessageListenerAdapter(RedisSubscriber subscriber) {
         return new MessageListenerAdapter(subscriber, "onMessage");
+    }
+
+    // 다중 인스턴스 신규 방 알림용 어댑터
+    // StringRedisSerializer: 시스템 채널은 roomId 숫자 문자열만 전달 — JSON 직렬화 불필요
+    @Bean
+    public MessageListenerAdapter chatSystemListenerAdapter(ChatSystemSubscriber subscriber) {
+        MessageListenerAdapter adapter = new MessageListenerAdapter(subscriber, "onNewRoom");
+        adapter.setSerializer(new StringRedisSerializer());
+        return adapter;
     }
 }

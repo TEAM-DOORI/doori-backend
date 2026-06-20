@@ -32,25 +32,22 @@ public class ChatService {
 
     @Transactional
     public ChatMessageResponse sendMessage(ChatMessageRequest request, Long memberId) {
-        validateMember(request.roomId(), memberId);
-        Member sender = findMember(memberId);
-        ChatMessage saved = messageRepository.save(
-            ChatMessage.of(request.roomId(), memberId, sender.getNickname(),
-                request.type(), request.content())
-        );
-        return ChatMessageResponse.from(saved);
+        return saveMessage(request.roomId(), memberId, request.type(), request.content());
     }
 
-    // DM 메시지 저장 — 라우팅은 room 기반 Redis Pub/Sub으로 일원화 (컨트롤러에서 publish)
     @Transactional
     public ChatMessageResponse sendDm(DmMessageRequest request, Long memberId) {
-        validateMember(request.roomId(), memberId);
+        return saveMessage(request.roomId(), memberId, request.type(), request.content());
+    }
+
+    private ChatMessageResponse saveMessage(Long roomId, Long memberId,
+                                            MessageType type, String content) {
+        validateMember(roomId, memberId);
         Member sender = findMember(memberId);
-        ChatMessage saved = messageRepository.save(
-            ChatMessage.of(request.roomId(), memberId, sender.getNickname(),
-                request.type(), request.content())
+        return ChatMessageResponse.from(
+            messageRepository.save(
+                ChatMessage.of(roomId, memberId, sender.getNickname(), type, content))
         );
-        return ChatMessageResponse.from(saved);
     }
 
     @Transactional
@@ -70,22 +67,27 @@ public class ChatService {
 
     @Transactional
     public ChatMessageResponse leaveRoom(Long roomId, Long memberId) {
-        // 비멤버의 가짜 퇴장 메시지 방지
-        validateMember(roomId, memberId);
+        // 검증과 엔티티 취득을 한 번의 쿼리로 처리
+        ChatRoomMember chatRoomMember = memberRepository
+            .findByRoomIdAndMemberId(roomId, memberId)
+            .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_FORBIDDEN));
         Member member = findMember(memberId);
 
-        memberRepository.findByRoomIdAndMemberId(roomId, memberId)
-            .ifPresent(memberRepository::delete);
+        memberRepository.delete(chatRoomMember);
+        memberRepository.flush();
 
-        // 방에 더 이상 멤버가 없으면 Redis 구독 해제
+        // save 먼저 — 실패 시 트랜잭션 롤백으로 delete가 복원되고 unsubscribe는 호출되지 않음
+        ChatMessage systemMsg = ChatMessage.of(
+            roomId, memberId, member.getNickname(),
+            MessageType.LEAVE, member.getNickname() + "님이 퇴장했습니다.");
+        ChatMessageResponse response = ChatMessageResponse.from(messageRepository.save(systemMsg));
+
+        // save 성공 확정 후 구독 해제 — DB와 인메모리 상태 일치 보장
         if (!memberRepository.existsByRoomId(roomId)) {
             subscriptionService.unsubscribe(roomId);
         }
 
-        ChatMessage systemMsg = ChatMessage.of(
-            roomId, memberId, member.getNickname(),
-            MessageType.LEAVE, member.getNickname() + "님이 퇴장했습니다.");
-        return ChatMessageResponse.from(messageRepository.save(systemMsg));
+        return response;
     }
 
     public SliceResponse<ChatMessageResponse> getHistory(Long roomId, Long cursorId, int size, Long memberId) {
