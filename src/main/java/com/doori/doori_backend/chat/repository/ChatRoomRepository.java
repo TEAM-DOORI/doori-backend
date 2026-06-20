@@ -15,7 +15,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
         WHERE r.id IN (
             SELECT m.roomId FROM ChatRoomMember m WHERE m.memberId = :memberId
         )
-        ORDER BY r.updatedAt DESC
+        ORDER BY COALESCE(r.lastMessageAt, r.createdAt) DESC
         """)
     List<ChatRoom> findAllByMemberId(@Param("memberId") Long memberId);
 

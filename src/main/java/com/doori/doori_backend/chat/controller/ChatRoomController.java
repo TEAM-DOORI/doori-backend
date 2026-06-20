@@ -58,7 +58,7 @@ public class ChatRoomController {
     @GetMapping("/rooms/{roomId}/messages")
     public ResponseEntity<ApiResponse<SliceResponse<ChatMessageResponse>>> getHistory(
             @PathVariable Long roomId,
-            @RequestParam(defaultValue = "9999999999") Long cursorId,
+            @RequestParam(defaultValue = "9223372036854775807") Long cursorId,
             @RequestParam(defaultValue = "30") int size,
             @AuthenticationPrincipal Long memberId) {
         SliceResponse<ChatMessageResponse> result =

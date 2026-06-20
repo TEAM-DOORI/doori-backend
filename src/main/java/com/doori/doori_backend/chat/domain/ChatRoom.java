@@ -41,6 +41,13 @@ public class ChatRoom {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    // 채팅방 목록 정렬 기준 — 마지막 메시지 발송 시각
+    private LocalDateTime lastMessageAt;
+
+    public void recordMessage(LocalDateTime time) {
+        this.lastMessageAt = time;
+    }
+
     public static ChatRoom createGroup(String name) {
         ChatRoom room = new ChatRoom();
         room.name = name;

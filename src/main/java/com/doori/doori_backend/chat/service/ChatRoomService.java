@@ -44,6 +44,13 @@ public class ChatRoomService {
         Set<Long> inviteeIds = new LinkedHashSet<>(request.memberIds());
         inviteeIds.remove(creatorId);
 
+        // 존재하지 않는 멤버 ID 포함 시 FK 없는 환경에서도 잘못된 데이터 방지
+        inviteeIds.forEach(id -> {
+            if (!mutableMemberRepository.existsById(id)) {
+                throw new CustomException(ErrorCode.USER_NOT_FOUND);
+            }
+        });
+
         List<ChatRoomMember> members = new ArrayList<>();
         members.add(ChatRoomMember.of(room.getId(), creatorId));
         inviteeIds.forEach(id -> members.add(ChatRoomMember.of(room.getId(), id)));
