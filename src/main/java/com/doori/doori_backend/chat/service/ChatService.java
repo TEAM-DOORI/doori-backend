@@ -109,6 +109,9 @@ public class ChatService {
     }
 
     private void validateMember(Long roomId, Long memberId) {
+        if (!roomRepository.existsById(roomId)) {
+            throw new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND);
+        }
         if (!memberRepository.existsByRoomIdAndMemberId(roomId, memberId)) {
             throw new CustomException(ErrorCode.CHAT_ROOM_FORBIDDEN);
         }
