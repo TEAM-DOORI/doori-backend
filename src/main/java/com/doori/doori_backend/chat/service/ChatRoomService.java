@@ -45,11 +45,10 @@ public class ChatRoomService {
         inviteeIds.remove(creatorId);
 
         // 존재하지 않는 멤버 ID 포함 시 FK 없는 환경에서도 잘못된 데이터 방지
-        inviteeIds.forEach(id -> {
-            if (!mutableMemberRepository.existsById(id)) {
-                throw new CustomException(ErrorCode.USER_NOT_FOUND);
-            }
-        });
+        // findAllById로 단일 IN 쿼리 — existsById N회 대신 1회로 처리
+        if (mutableMemberRepository.findAllById(inviteeIds).size() != inviteeIds.size()) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
 
         List<ChatRoomMember> members = new ArrayList<>();
         members.add(ChatRoomMember.of(room.getId(), creatorId));

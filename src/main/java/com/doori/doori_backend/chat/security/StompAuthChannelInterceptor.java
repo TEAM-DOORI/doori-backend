@@ -25,9 +25,9 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         StompHeaderAccessor accessor =
                 MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-        if (accessor == null) return message;
+        // command == null 이면 heartbeat 프레임 — 통과
+        if (accessor == null || accessor.getCommand() == null) return message;
 
-        // CONNECT 프레임에서만 JWT 검증 — 이후 SEND/SUBSCRIBE는 Principal 재사용
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authHeader = accessor.getFirstNativeHeader("Authorization");
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -42,7 +42,14 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
             );
             accessor.setUser(auth);
+
+        } else if (!StompCommand.DISCONNECT.equals(accessor.getCommand())) {
+            // SEND/SUBSCRIBE/UNSUBSCRIBE 등 — CONNECT 없이 들어온 프레임 차단
+            if (accessor.getUser() == null) {
+                throw new MessageDeliveryException("인증되지 않은 요청입니다.");
+            }
         }
+
         return message;
     }
 }
