@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/schools/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/ws-chat/**").permitAll() // WebSocket 핸드셰이크는 별도 JWT 검증
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex

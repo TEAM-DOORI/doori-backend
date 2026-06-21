@@ -1,28 +1,27 @@
 package com.doori.doori_backend.chat.domain;
 
-import com.doori.doori_backend.user.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "chat_message")
+@Table(
+    name = "chat_message",
+    indexes = @Index(name = "idx_chat_message_room_id", columnList = "room_id, id")
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
@@ -32,30 +31,35 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_room_id", nullable = false)
-    private ChatRoom chatRoom;
+    @Column(name = "room_id", nullable = false)
+    private Long roomId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id", nullable = false)
-    private Member sender;
+    @Column(name = "sender_id", nullable = false)
+    private Long senderId;
 
     @Column(nullable = false)
-    private String content;
+    private String senderNickname;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MessageType messageType;
+    private MessageType type;
+
+    // TEXT면 텍스트, IMAGE/FILE이면 S3 URL
+    @Column(nullable = false, length = 2000)
+    private String content;
 
     @CreatedDate
     @Column(updatable = false)
-    private LocalDateTime sentAt;
+    private LocalDateTime createdAt;
 
-    @Builder
-    public ChatMessage(ChatRoom chatRoom, Member sender, String content, MessageType messageType) {
-        this.chatRoom = chatRoom;
-        this.sender = sender;
-        this.content = content;
-        this.messageType = messageType;
+    public static ChatMessage of(Long roomId, Long senderId, String nickname,
+                                 MessageType type, String content) {
+        ChatMessage msg = new ChatMessage();
+        msg.roomId = roomId;
+        msg.senderId = senderId;
+        msg.senderNickname = nickname;
+        msg.type = type;
+        msg.content = content;
+        return msg;
     }
 }
