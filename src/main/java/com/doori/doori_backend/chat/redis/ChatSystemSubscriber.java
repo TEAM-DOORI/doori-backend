@@ -20,4 +20,14 @@ public class ChatSystemSubscriber {
             log.error("신규 방 구독 전파 실패: roomId={}", roomIdStr, e);
         }
     }
+
+    // 다른 인스턴스에서 방이 비워졌을 때 호출 — 이 인스턴스도 로컬 구독 해제
+    // unsubscribe 사용: 이미 idempotent (subscribedRooms.remove 가 false면 skip)
+    public void onRoomRemoved(String roomIdStr, String channel) {
+        try {
+            subscriptionService.unsubscribe(Long.parseLong(roomIdStr));
+        } catch (Exception e) {
+            log.error("방 구독 해제 전파 실패: roomId={}", roomIdStr, e);
+        }
+    }
 }

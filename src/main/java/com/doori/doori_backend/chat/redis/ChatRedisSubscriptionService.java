@@ -35,6 +35,8 @@ public class ChatRedisSubscriptionService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onRoomUnsubscribed(ChatRoomUnsubscribedEvent event) {
         unsubscribe(event.roomId());
+        // subscribe()의 chat:system:new-room 브로드캐스트와 대칭 — 다른 인스턴스도 구독 해제
+        stringRedisTemplate.convertAndSend("chat:system:room-removed", String.valueOf(event.roomId()));
     }
 
     // 로컬 구독 + 다른 인스턴스 알림 (enterRoom 런타임 호출용)

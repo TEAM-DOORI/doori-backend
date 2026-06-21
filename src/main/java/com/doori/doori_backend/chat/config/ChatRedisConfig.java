@@ -47,10 +47,17 @@ public class ChatRedisConfig {
     }
 
     // 다중 인스턴스 신규 방 알림용 어댑터
-    // StringRedisSerializer: 시스템 채널은 roomId 숫자 문자열만 전달 — JSON 직렬화 불필요
     @Bean
     public MessageListenerAdapter chatSystemListenerAdapter(ChatSystemSubscriber subscriber) {
         MessageListenerAdapter adapter = new MessageListenerAdapter(subscriber, "onNewRoom");
+        adapter.setSerializer(new StringRedisSerializer());
+        return adapter;
+    }
+
+    // 다중 인스턴스 방 구독 해제 알림용 어댑터
+    @Bean
+    public MessageListenerAdapter chatSystemRoomRemovedListenerAdapter(ChatSystemSubscriber subscriber) {
+        MessageListenerAdapter adapter = new MessageListenerAdapter(subscriber, "onRoomRemoved");
         adapter.setSerializer(new StringRedisSerializer());
         return adapter;
     }
