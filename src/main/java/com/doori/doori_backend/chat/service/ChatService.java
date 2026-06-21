@@ -3,15 +3,14 @@ package com.doori.doori_backend.chat.service;
 import com.doori.doori_backend.auth.domain.Member;
 import com.doori.doori_backend.auth.repository.MemberRepository;
 import com.doori.doori_backend.chat.domain.ChatMessage;
-import com.doori.doori_backend.chat.domain.ChatRoom;
 import com.doori.doori_backend.chat.domain.ChatRoomMember;
 import com.doori.doori_backend.chat.domain.MessageType;
 import com.doori.doori_backend.chat.dto.request.ChatMessageRequest;
 import com.doori.doori_backend.chat.dto.request.DmMessageRequest;
 import com.doori.doori_backend.chat.dto.response.ChatMessageResponse;
 import com.doori.doori_backend.chat.dto.response.SliceResponse;
+import com.doori.doori_backend.chat.event.ChatRoomSubscribedEvent;
 import com.doori.doori_backend.chat.event.ChatRoomUnsubscribedEvent;
-import com.doori.doori_backend.chat.redis.ChatRedisSubscriptionService;
 import com.doori.doori_backend.chat.repository.ChatMessageRepository;
 import com.doori.doori_backend.chat.repository.ChatRoomMemberRepository;
 import com.doori.doori_backend.chat.repository.ChatRoomRepository;
@@ -33,7 +32,6 @@ public class ChatService {
     private final ChatRoomRepository roomRepository;
     private final ChatRoomMemberRepository memberRepository;
     private final MemberRepository mutableMemberRepository;
-    private final ChatRedisSubscriptionService subscriptionService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -64,13 +62,16 @@ public class ChatService {
         validateMember(roomId, memberId);
         Member member = findMember(memberId);
 
-        // 이 인스턴스의 Redis 구독 활성화 (멱등, 중복 등록 안 함)
-        subscriptionService.subscribe(roomId);
+        ChatMessage systemMsg = messageRepository.save(
+            ChatMessage.of(roomId, memberId, member.getNickname(),
+                MessageType.ENTER, member.getNickname() + "님이 입장했습니다."));
+        // 입장 이벤트도 lastMessageAt 갱신 — 채팅방 목록 정렬 기준 통일
+        roomRepository.findById(roomId)
+            .ifPresent(room -> room.recordMessage(systemMsg.getCreatedAt()));
 
-        ChatMessage systemMsg = ChatMessage.of(
-            roomId, memberId, member.getNickname(),
-            MessageType.ENTER, member.getNickname() + "님이 입장했습니다.");
-        return ChatMessageResponse.from(messageRepository.save(systemMsg));
+        // TX 커밋 후 Redis 구독 — createGroup/getOrCreateDm과 동일한 AFTER_COMMIT 패턴
+        eventPublisher.publishEvent(new ChatRoomSubscribedEvent(roomId));
+        return ChatMessageResponse.from(systemMsg);
     }
 
     @Transactional
@@ -84,18 +85,19 @@ public class ChatService {
         memberRepository.delete(chatRoomMember);
         memberRepository.flush();
 
-        // save 먼저 — 실패 시 트랜잭션 롤백으로 delete가 복원되고 unsubscribe는 호출되지 않음
-        ChatMessage systemMsg = ChatMessage.of(
-            roomId, memberId, member.getNickname(),
-            MessageType.LEAVE, member.getNickname() + "님이 퇴장했습니다.");
-        ChatMessageResponse response = ChatMessageResponse.from(messageRepository.save(systemMsg));
+        ChatMessage systemMsg = messageRepository.save(
+            ChatMessage.of(roomId, memberId, member.getNickname(),
+                MessageType.LEAVE, member.getNickname() + "님이 퇴장했습니다."));
+        // 퇴장 이벤트도 lastMessageAt 갱신 — 채팅방 목록 정렬 기준 통일
+        roomRepository.findById(roomId)
+            .ifPresent(room -> room.recordMessage(systemMsg.getCreatedAt()));
 
-        // TX 커밋 후 구독 해제 — 롤백 시 DB 멤버 복원과 인메모리 구독 상태 일치 보장
+        // TX 커밋 후 구독 해제 — 롤백 시 DB 멤버 복원과 Redis 구독 상태 일치 보장
         if (!memberRepository.existsByRoomId(roomId)) {
             eventPublisher.publishEvent(new ChatRoomUnsubscribedEvent(roomId));
         }
 
-        return response;
+        return ChatMessageResponse.from(systemMsg);
     }
 
     public SliceResponse<ChatMessageResponse> getHistory(Long roomId, Long cursorId, int size, Long memberId) {
