@@ -1,6 +1,6 @@
-package com.doori.doori_backend.auth.repository;
+package com.doori.doori_backend.user.repository;
 
-import com.doori.doori_backend.auth.domain.Member;
+import com.doori.doori_backend.user.domain.Member;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -2,34 +2,31 @@ package com.doori.doori_backend.user.dto.response;
 
 import com.doori.doori_backend.user.domain.Member;
 import com.doori.doori_backend.lifestyle.domain.LifestyleProfile;
+import java.util.List;
 
-public record ExploreItem(
+public record ProfileCardResponse(
     Long userId,
     String name,
     String nickname,
     String gender,
+    String schoolName,
     String profileImageUrl,
-    String housingType,
-    String preferredRegion,
+    String bio,
     int matchingScore,
-    boolean isFavorite
+    List<String> matchedCriteria
 ) {
-    public static ExploreItem of(
-        Member member,
-        LifestyleProfile profile,
-        int matchingScore,
-        boolean isFavorite
-    ) {
-        return new ExploreItem(
+    public static ProfileCardResponse of(Member member, LifestyleProfile profile,
+        int matchingScore, List<String> matchedCriteria) {
+        return new ProfileCardResponse(
             member.getId(),
             member.getName(),
             member.getNickname(),
             member.getGender().name(),
+            member.getSchool().getDisplayName(),
             member.getProfileImageUrl(),
-            profile.getHousingType() != null ? profile.getHousingType().getValue() : null,
-            profile.getPreferredRegion(),
+            profile != null ? profile.getBio() : null,
             matchingScore,
-            isFavorite
+            matchedCriteria
         );
     }
 }

@@ -8,9 +8,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.doori.doori_backend.auth.domain.Gender;
-import com.doori.doori_backend.auth.domain.Member;
-import com.doori.doori_backend.auth.repository.MemberRepository;
+import com.doori.doori_backend.user.domain.Gender;
+import com.doori.doori_backend.user.domain.Member;
+import com.doori.doori_backend.user.repository.MemberRepository;
 import com.doori.doori_backend.favorite.domain.PostFavorite;
 import com.doori.doori_backend.favorite.domain.UserFavorite;
 import com.doori.doori_backend.favorite.repository.PostFavoriteRepository;

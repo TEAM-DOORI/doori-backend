@@ -1,0 +1,3 @@
+- [ErrorCode 네임스페이스 현황](project-errorcode-patterns.md) — 접두사별 번호 할당 현황, A008 결번 주의
+- [JWT Principal 패턴](project-auth-principal.md) — (Long) getPrincipal() 캐스팅이 프로젝트 표준임을 확인
+- [공통 코드 패턴](project-common-patterns.md) — Controller 경로 스타일 혼재, findActiveMember 중복, N+1 대응 현황

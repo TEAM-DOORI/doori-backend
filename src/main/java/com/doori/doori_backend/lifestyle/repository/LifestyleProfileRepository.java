@@ -1,7 +1,7 @@
 package com.doori.doori_backend.lifestyle.repository;
 
-import com.doori.doori_backend.auth.domain.Member;
-import com.doori.doori_backend.auth.domain.MemberStatus;
+import com.doori.doori_backend.user.domain.Member;
+import com.doori.doori_backend.user.domain.MemberStatus;
 import com.doori.doori_backend.lifestyle.domain.HousingType;
 import com.doori.doori_backend.lifestyle.domain.LifestyleProfile;
 import java.util.List;
@@ -31,6 +31,7 @@ public interface LifestyleProfileRepository extends JpaRepository<LifestyleProfi
     @Query("""
         SELECT lp FROM LifestyleProfile lp
         WHERE lp.member.status = :status
+          AND lp.member.id != :memberId
           AND (:housingType IS NULL OR lp.housingType = :housingType)
           AND (:isSmoker IS NULL OR lp.isSmoker = :isSmoker)
           AND lp.member.id > :cursorId
@@ -38,6 +39,7 @@ public interface LifestyleProfileRepository extends JpaRepository<LifestyleProfi
         """)
     List<LifestyleProfile> findForExplore(
         @Param("status") MemberStatus status,
+        @Param("memberId") Long memberId,
         @Param("housingType") HousingType housingType,
         @Param("isSmoker") Boolean isSmoker,
         @Param("cursorId") Long cursorId,

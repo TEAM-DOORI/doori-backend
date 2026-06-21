@@ -1,6 +1,6 @@
 package com.doori.doori_backend.lifestyle.domain;
 
-import com.doori.doori_backend.auth.domain.Member;
+import com.doori.doori_backend.user.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -38,15 +38,62 @@ public class LifestyleProfile {
 
     private Boolean isSmoker;
 
+    @Enumerated(EnumType.STRING)
+    private SleepTime sleepTime;
+
+    @Enumerated(EnumType.STRING)
+    private WakeUpTime wakeUpTime;
+
+    @Enumerated(EnumType.STRING)
+    private CleaningCycle cleaningCycle;
+
+    @Enumerated(EnumType.STRING)
+    private ImportanceLevel cleanlinessLevel;
+
+    @Enumerated(EnumType.STRING)
+    private ImportanceLevel noiseSensitivity;
+
+    @Enumerated(EnumType.STRING)
+    private Atmosphere atmosphere;
+
+    @Enumerated(EnumType.STRING)
+    private PriorityCriteria priorityCriteria;
+
+    @Column(length = 200)
+    private String bio;
+
+    @Column(length = 200)
+    private String roommateWish;
+
     @Builder
-    public LifestyleProfile(Member member, HousingType housingType, String preferredRegion, Boolean isSmoker) {
+    public LifestyleProfile(Member member, HousingType housingType, String preferredRegion,
+        Boolean isSmoker, SleepTime sleepTime, WakeUpTime wakeUpTime,
+        CleaningCycle cleaningCycle, ImportanceLevel cleanlinessLevel,
+        ImportanceLevel noiseSensitivity, Atmosphere atmosphere,
+        PriorityCriteria priorityCriteria, String bio, String roommateWish) {
         this.member = member;
         this.housingType = housingType;
         this.preferredRegion = preferredRegion;
         this.isSmoker = isSmoker;
+        this.sleepTime = sleepTime;
+        this.wakeUpTime = wakeUpTime;
+        this.cleaningCycle = cleaningCycle;
+        this.cleanlinessLevel = cleanlinessLevel;
+        this.noiseSensitivity = noiseSensitivity;
+        this.atmosphere = atmosphere;
+        this.priorityCriteria = priorityCriteria;
+        this.bio = bio;
+        this.roommateWish = roommateWish;
     }
 
     public boolean isComplete() {
-        return housingType != null && preferredRegion != null;
+        return housingType != null
+            && isSmoker != null
+            && sleepTime != null
+            && wakeUpTime != null
+            && cleaningCycle != null
+            && cleanlinessLevel != null
+            && noiseSensitivity != null
+            && atmosphere != null;
     }
 }

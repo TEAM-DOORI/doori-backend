@@ -1,6 +1,6 @@
 package com.doori.doori_backend.chat.service;
 
-import com.doori.doori_backend.auth.repository.MemberRepository;
+import com.doori.doori_backend.user.repository.MemberRepository;
 import com.doori.doori_backend.chat.domain.ChatRoom;
 import com.doori.doori_backend.chat.domain.ChatRoomMember;
 import com.doori.doori_backend.chat.domain.RoomType;

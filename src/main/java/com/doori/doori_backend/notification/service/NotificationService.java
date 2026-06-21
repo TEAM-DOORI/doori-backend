@@ -3,6 +3,7 @@ package com.doori.doori_backend.notification.service;
 import com.doori.doori_backend.global.error.ErrorCode;
 import com.doori.doori_backend.global.exception.CustomException;
 import com.doori.doori_backend.notification.domain.Notification;
+import com.doori.doori_backend.notification.domain.NotificationType;
 import com.doori.doori_backend.notification.dto.response.NotificationItem;
 import com.doori.doori_backend.notification.dto.response.NotificationListResponse;
 import com.doori.doori_backend.notification.repository.NotificationRepository;
@@ -21,12 +22,12 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
-    public NotificationListResponse getNotifications(Long memberId, String cursor) {
+    public NotificationListResponse getNotifications(Long memberId, NotificationType type, String cursor) {
         Long cursorId = parseCursor(cursor);
         int fetchSize = DEFAULT_LIMIT + 1;
 
         List<Notification> notifications = notificationRepository.findByReceiverWithCursor(
-            memberId, cursorId, PageRequest.of(0, fetchSize));
+            memberId, cursorId, type, PageRequest.of(0, fetchSize));
 
         boolean hasMore = notifications.size() == fetchSize;
         if (hasMore) {
@@ -52,6 +53,11 @@ public class NotificationService {
         notification.markAsRead();
     }
 
+    @Transactional
+    public void markAllAsRead(Long memberId) {
+        notificationRepository.markAllAsReadByMemberId(memberId);
+    }
+
     private Long parseCursor(String cursor) {
         if (cursor == null || cursor.isBlank()) {
             return null;
@@ -63,8 +69,4 @@ public class NotificationService {
         }
     }
 
-    @Transactional
-    public void markAllAsRead(Long memberId) {
-        notificationRepository.markAllAsReadByMemberId(memberId);
-    }
 }

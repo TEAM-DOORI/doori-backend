@@ -1,6 +1,6 @@
 package com.doori.doori_backend.favorite.dto.response;
 
-import com.doori.doori_backend.auth.domain.Member;
+import com.doori.doori_backend.user.domain.Member;
 
 /**
  * 찜한 유저 목록 응답 DTO
