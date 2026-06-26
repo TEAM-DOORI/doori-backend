@@ -22,7 +22,10 @@ public class LifestyleService {
 
     @Transactional(readOnly = true)
     public LifestyleProfileResponse getMyLifestyle(Long memberId) {
-        LifestyleProfile profile = lifestyleProfileRepository.findByMemberId(memberId)
+        Member member = memberRepository.findById(memberId)
+            .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        LifestyleProfile profile = lifestyleProfileRepository.findByMember(member)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_LIFESTYLE_PROFILE_REQUIRED));
         return LifestyleProfileResponse.from(profile);
     }
