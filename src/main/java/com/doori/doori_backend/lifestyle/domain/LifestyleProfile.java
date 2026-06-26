@@ -86,6 +86,34 @@ public class LifestyleProfile {
         this.roommateWish = roommateWish;
     }
 
+    public void update(
+        HousingType housingType,
+        String preferredRegion,
+        Boolean isSmoker,
+        SleepTime sleepTime,
+        WakeUpTime wakeUpTime,
+        CleaningCycle cleaningCycle,
+        ImportanceLevel cleanlinessLevel,
+        ImportanceLevel noiseSensitivity,
+        Atmosphere atmosphere,
+        PriorityCriteria priorityCriteria,
+        String bio,
+        String roommateWish
+    ) {
+        this.housingType = housingType;
+        this.preferredRegion = preferredRegion;
+        this.isSmoker = isSmoker;
+        this.sleepTime = sleepTime;
+        this.wakeUpTime = wakeUpTime;
+        this.cleaningCycle = cleaningCycle;
+        this.cleanlinessLevel = cleanlinessLevel;
+        this.noiseSensitivity = noiseSensitivity;
+        this.atmosphere = atmosphere;
+        this.priorityCriteria = priorityCriteria;
+        this.bio = bio;
+        this.roommateWish = roommateWish;
+    }
+
     public boolean isComplete() {
         return housingType != null
             && isSmoker != null

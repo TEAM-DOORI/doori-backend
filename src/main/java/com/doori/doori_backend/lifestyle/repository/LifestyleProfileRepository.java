@@ -1,9 +1,10 @@
 package com.doori.doori_backend.lifestyle.repository;
 
-import com.doori.doori_backend.user.domain.Member;
-import com.doori.doori_backend.user.domain.MemberStatus;
 import com.doori.doori_backend.lifestyle.domain.HousingType;
 import com.doori.doori_backend.lifestyle.domain.LifestyleProfile;
+import com.doori.doori_backend.school.domain.School;
+import com.doori.doori_backend.user.domain.Member;
+import com.doori.doori_backend.user.domain.MemberStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
@@ -20,10 +21,12 @@ public interface LifestyleProfileRepository extends JpaRepository<LifestyleProfi
     @Query("""
         SELECT lp FROM LifestyleProfile lp
         WHERE lp.member.status = :status
+          AND lp.member.school = :school
           AND lp.member.id != :excludeMemberId
         """)
     List<LifestyleProfile> findActiveExcluding(
         @Param("status") MemberStatus status,
+        @Param("school") School school,
         @Param("excludeMemberId") Long excludeMemberId,
         Pageable pageable
     );

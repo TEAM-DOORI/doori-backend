@@ -1,5 +1,6 @@
 package com.doori.doori_backend.user.service;
 
+import com.doori.doori_backend.lifestyle.domain.ImportanceLevel;
 import com.doori.doori_backend.lifestyle.domain.LifestyleProfile;
 import java.util.ArrayList;
 import java.util.List;

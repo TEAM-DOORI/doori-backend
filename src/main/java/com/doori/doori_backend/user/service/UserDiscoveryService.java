@@ -51,7 +51,7 @@ public class UserDiscoveryService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_LIFESTYLE_PROFILE_REQUIRED));
 
         List<LifestyleProfile> candidates = lifestyleProfileRepository.findActiveExcluding(
-            MemberStatus.ACTIVE, memberId, PageRequest.of(0, 50)
+            MemberStatus.ACTIVE, member.getSchool(), memberId, PageRequest.of(0, 50)
         );
 
         List<ExploreItem> recommendations = candidates.stream()
@@ -83,9 +83,7 @@ public class UserDiscoveryService {
         boolean hasMore = results.size() > limit;
         List<LifestyleProfile> page = hasMore ? results.subList(0, limit) : results;
 
-        Optional<LifestyleProfile> myProfile = lifestyleProfileRepository.findByMember(
-            findActiveMember(memberId)
-        );
+        Optional<LifestyleProfile> myProfile = lifestyleProfileRepository.findByMember(member);
 
         List<ExploreItem> items = page.stream()
             .map(profile -> ExploreItem.of(
