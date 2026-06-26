@@ -10,6 +10,7 @@ import com.doori.doori_backend.lifestyle.domain.LifestyleProfile;
 import com.doori.doori_backend.lifestyle.repository.LifestyleProfileRepository;
 import com.doori.doori_backend.user.dto.response.ExploreItem;
 import com.doori.doori_backend.user.dto.response.ExploreResponse;
+import com.doori.doori_backend.user.dto.response.ProfileCardResponse;
 import com.doori.doori_backend.user.dto.response.RecommendationsResponse;
 import com.doori.doori_backend.user.dto.response.UserProfileResponse;
 import java.nio.charset.StandardCharsets;
@@ -67,17 +68,15 @@ public class UserDiscoveryService {
     @Transactional(readOnly = true)
     public ExploreResponse explore(
         Long memberId,
-        String residenceType,
+        HousingType housingType,
         Boolean isSmoker,
         String cursor,
         int limit
     ) {
-        Member member = findActiveMember(memberId);
-        HousingType housingType = parseHousingType(residenceType);
         long cursorId = decodeCursor(cursor);
 
         List<LifestyleProfile> results = lifestyleProfileRepository.findForExplore(
-            MemberStatus.ACTIVE, member.getSchool(), housingType, isSmoker, cursorId,
+            MemberStatus.ACTIVE, memberId, housingType, isSmoker, cursorId,
             PageRequest.of(0, limit + 1)
         );
 
@@ -87,7 +86,6 @@ public class UserDiscoveryService {
         Optional<LifestyleProfile> myProfile = lifestyleProfileRepository.findByMember(member);
 
         List<ExploreItem> items = page.stream()
-            .filter(p -> !p.getMember().getId().equals(memberId))
             .map(profile -> ExploreItem.of(
                 profile.getMember(), profile,
                 myProfile.map(mp -> scoreCalculator.calculate(mp, profile)).orElse(0),
@@ -97,6 +95,25 @@ public class UserDiscoveryService {
 
         String nextCursor = hasMore ? encodeCursor(page.get(page.size() - 1).getMember().getId()) : null;
         return new ExploreResponse(items, nextCursor, hasMore);
+    }
+
+    @Transactional(readOnly = true)
+    public ProfileCardResponse getProfileCard(Long requesterId, Long targetId) {
+        Member target = memberRepository.findById(targetId)
+            .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        Optional<LifestyleProfile> requesterProfile = lifestyleProfileRepository.findByMemberId(requesterId);
+        Optional<LifestyleProfile> targetProfile = lifestyleProfileRepository.findByMemberId(targetId);
+
+        int matchingScore = 0;
+        List<String> matched = List.of();
+        if (requesterProfile.isPresent() && targetProfile.isPresent()) {
+            matchingScore = scoreCalculator.calculate(requesterProfile.get(), targetProfile.get());
+            matched = scoreCalculator.matchedCriteria(requesterProfile.get(), targetProfile.get());
+        }
+
+        return ProfileCardResponse.of(target, targetProfile.orElse(null), matchingScore, matched);
     }
 
     private int computeMatchingScore(Long requesterId, Long targetId) {
@@ -113,17 +130,6 @@ public class UserDiscoveryService {
         return memberRepository.findById(memberId)
             .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    private HousingType parseHousingType(String residenceType) {
-        if (residenceType == null || residenceType.isBlank()) {
-            return null;
-        }
-        try {
-            return HousingType.fromValue(residenceType);
-        } catch (IllegalArgumentException e) {
-            throw new CustomException(ErrorCode.COMMON_BAD_REQUEST);
-        }
     }
 
     private long decodeCursor(String cursor) {

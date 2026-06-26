@@ -26,7 +26,10 @@ public enum ErrorCode {
 	BLOCK_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "B001", "자기 자신을 차단할 수 없습니다."),
 	BLOCK_DUPLICATE(HttpStatus.CONFLICT, "B002", "이미 차단한 사용자입니다."),
 	BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "B003", "차단 내역을 찾을 수 없습니다."),
-	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "존재하지 않는 알림입니다.");
+	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "존재하지 않는 알림입니다."),
+	CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CH001", "채팅방을 찾을 수 없습니다."),
+	CHAT_ROOM_FORBIDDEN(HttpStatus.FORBIDDEN, "CH002", "채팅방 접근 권한이 없습니다."),
+	CHAT_DM_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "CH003", "자기 자신과 DM을 시작할 수 없습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;

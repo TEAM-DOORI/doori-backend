@@ -1,6 +1,7 @@
 package com.doori.doori_backend.notification.repository;
 
 import com.doori.doori_backend.notification.domain.Notification;
+import com.doori.doori_backend.notification.domain.NotificationType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
@@ -11,11 +12,18 @@ import org.springframework.data.repository.query.Param;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    // 커서 기반 페이지네이션: cursor 미지정 시 최신순, cursor 지정 시 해당 ID 이전 항목 조회
-    @Query("SELECT n FROM Notification n WHERE n.receiver.id = :memberId AND (:cursor IS NULL OR n.id < :cursor) ORDER BY n.id DESC")
+    // 커서 기반 페이지네이션: type=null이면 전체 조회, 지정 시 해당 타입만 조회
+    @Query("""
+        SELECT n FROM Notification n
+        WHERE n.receiver.id = :memberId
+          AND (:cursor IS NULL OR n.id < :cursor)
+          AND (:type IS NULL OR n.type = :type)
+        ORDER BY n.id DESC
+        """)
     List<Notification> findByReceiverWithCursor(
         @Param("memberId") Long memberId,
         @Param("cursor") Long cursor,
+        @Param("type") NotificationType type,
         Pageable pageable
     );
 
