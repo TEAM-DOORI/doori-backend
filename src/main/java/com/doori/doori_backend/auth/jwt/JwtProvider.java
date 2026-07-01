@@ -63,6 +63,10 @@ public class JwtProvider {
         return validateTypedTokenAndGetMemberId(token, ACCESS_TOKEN_TYPE);
     }
 
+    public LocalDateTime getAccessTokenExpiry(String token) {
+        return getTokenExpiry(token, ACCESS_TOKEN_TYPE);
+    }
+
     public Long validateRefreshTokenAndGetMemberId(String token) {
         return validateTypedTokenAndGetMemberId(token, REFRESH_TOKEN_TYPE);
     }
@@ -84,7 +88,15 @@ public class JwtProvider {
     }
 
     public LocalDateTime getRefreshTokenExpiry(String token) {
-        Date expiry = getClaims(token).getExpiration();
+        return getTokenExpiry(token, REFRESH_TOKEN_TYPE);
+    }
+
+    private LocalDateTime getTokenExpiry(String token, String expectedType) {
+        Claims claims = getClaims(token);
+        if (!expectedType.equals(claims.get(TOKEN_TYPE_CLAIM, String.class))) {
+            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+        }
+        Date expiry = claims.getExpiration();
         return expiry.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 

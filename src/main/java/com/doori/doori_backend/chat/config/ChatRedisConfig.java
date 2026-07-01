@@ -1,6 +1,5 @@
 package com.doori.doori_backend.chat.config;
 
-import com.doori.doori_backend.chat.redis.ChatSystemSubscriber;
 import com.doori.doori_backend.chat.redis.RedisSubscriber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -46,19 +45,4 @@ public class ChatRedisConfig {
         return new MessageListenerAdapter(subscriber, "onMessage");
     }
 
-    // 다중 인스턴스 신규 방 알림용 어댑터
-    @Bean
-    public MessageListenerAdapter chatSystemListenerAdapter(ChatSystemSubscriber subscriber) {
-        MessageListenerAdapter adapter = new MessageListenerAdapter(subscriber, "onNewRoom");
-        adapter.setSerializer(new StringRedisSerializer());
-        return adapter;
-    }
-
-    // 다중 인스턴스 방 구독 해제 알림용 어댑터
-    @Bean
-    public MessageListenerAdapter chatSystemRoomRemovedListenerAdapter(ChatSystemSubscriber subscriber) {
-        MessageListenerAdapter adapter = new MessageListenerAdapter(subscriber, "onRoomRemoved");
-        adapter.setSerializer(new StringRedisSerializer());
-        return adapter;
-    }
 }
